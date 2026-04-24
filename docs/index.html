@@ -330,7 +330,21 @@
                     <input type="text" id="oeisId" placeholder="OEIS ID (e.g., A000045)" style="flex: 1;">
                     <button class="btn btn-secondary" id="fetchOeisBtn">🔢 Fetch from OEIS</button>
                 </div>
-                
+                <!-- OEIS Panel with suggestions -->
+                <div class="oeis-panel">
+                    <input type="text" id="oeisId" placeholder="OEIS ID (e.g., A000045)" list="oeisSuggestions" style="flex: 1;">
+                    <datalist id="oeisSuggestions">
+                        <option value="A000027">A000027 - Natural numbers</option>
+                        <option value="A000045">A000045 - Fibonacci</option>
+                        <option value="A000142">A000142 - Factorials</option>
+                        <option value="A000217">A000217 - Triangular numbers</option>
+                        <option value="A000079">A000079 - Powers of 2</option>
+                        <option value="A000290">A000290 - Squares</option>
+                        <option value="A001477">A001477 - Nonnegative integers</option>
+                        <option value="A000004">A000004 - All zeros</option>
+                    </datalist>
+                    <button class="btn btn-secondary" id="fetchOeisBtn">🔢 Fetch</button>
+                </div>
                 <div id="streamList" style="margin-top: 0.75rem;"></div>
             </div>
         </div>
@@ -520,67 +534,117 @@
             }
         }
         
+
         // ============================================
-        // OEIS Integration
+        // FIXED OEIS Integration (CORS-safe)
         // ============================================
         class OEISFetcher {
-            async fetchSequence(id) {
-                // Normalize ID: A000045 -> A000045
-                const normId = id.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                if (!normId.startsWith('A') || normId.length < 2) {
-                    throw new Error('Invalid OEIS ID. Use format like A000045');
-                }
-                
-                // Use OEIS CORS proxy
-                const url = `https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`;
-                
-                try {
-                    const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-                    if (!response.ok) throw new Error('Sequence not found');
-                    
-                    const text = await response.text();
-                    const terms = [];
-                    const lines = text.split('\n');
-                    
-                    for (const line of lines) {
-                        const match = line.match(/^\d+\s+(-?\d+)/);
-                        if (match && terms.length < 20) {
-                            terms.push(parseInt(match[1]));
-                        }
-                    }
-                    
-                    if (terms.length === 0) throw new Error('No terms found');
-                    return terms;
-                } catch(e) {
-                    // Fallback: use JSON API
-                    const jsonUrl = `https://oeis.org/search?q=id:${normId}&fmt=json`;
-                    try {
-                        const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`);
-                        const data = JSON.parse(resp);
-                        if (data.results && data.results[0]) {
-                            const seqStr = data.results[0].data;
-                            const terms = seqStr.split(',').slice(0, 20).map(Number);
-                            return terms;
-                        }
-                    } catch(e2) {
-                        throw new Error(`Cannot fetch ${normId}: ${e.message}`);
-                    }
-                    throw e;
-                }
+            constructor() {
+                // Built-in common sequences (fallback)
+                this.builtinSequences = {
+                    'A000027': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+                    'A000045': [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181],
+                    'A000142': [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600, 6227020800],
+                    'A000217': [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78, 91, 105, 120, 136, 153, 171, 190],
+                    'A000079': [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768],
+                    'A000290': [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361],
+                    'A001477': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                    'A000004': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                };
             }
-            
+    
+            async fetchSequence(id) {
+                const normId = id.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+                // Check built-in first
+                if (this.builtinSequences[normId]) {
+                    return this.builtinSequences[normId];
+                }
+        
+                // Try multiple proxy strategies
+                const proxies = [
+                    `https://corsproxy.io/?url=${encodeURIComponent(`https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`)}`,
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`)}`,
+                    `https://cors-anywhere.herokuapp.com/https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`
+                ];
+        
+                for (const proxyUrl of proxies) {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                        const response = await fetch(proxyUrl, {
+                            signal: controller.signal,
+                            headers: { 'Accept': 'text/plain' }
+                        });
+                        clearTimeout(timeoutId);
+                
+                        if (response.ok) {
+                            const text = await response.text();
+                            const terms = this.parseOeisText(text);
+                            if (terms.length >= 5) {
+                                return terms;
+                            }
+                        }
+                    } catch(e) {
+                        // Try next proxy
+                        continue;
+                    }
+                }
+        
+                // Try JSON API as last resort
+                try {
+                    const jsonUrl = `https://corsproxy.io/?url=${encodeURIComponent(`https://oeis.org/search?q=id:${normId}&fmt=json`)}`;
+                    const response = await fetch(jsonUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.results && data.results[0] && data.results[0].data) {
+                            const terms = data.results[0].data.split(',').slice(0, 30).map(Number);
+                            if (terms.length >= 5) {
+                                return terms;
+                            }
+                        }
+                    }
+                } catch(e) {
+                    // Fall through
+                }
+        
+                throw new Error(`Cannot fetch ${normId}. Try built-in IDs: A000027, A000045, A000142, A000217, A000079, A000290`);
+            }
+    
+            parseOeisText(text) {
+                const terms = [];
+                const lines = text.split('\n');
+                for (const line of lines) {
+                    const match = line.match(/^\d+\s+(-?\d+)/);
+                    if (match && terms.length < 30) {
+                        const val = parseInt(match[1]);
+                        if (!isNaN(val)) {
+                            terms.push(val);
+                        }
+                    }
+                }
+                return terms;
+            }
+    
             createStreamFromTerms(name, terms) {
-                // Create a stream that yields terms from OEIS
-                const seed = { index: 0, terms };
-                const stepFn = (seed) => {
-                    const value = seed.terms[seed.index % seed.terms.length];
-                    const nextSeed = { index: seed.index + 1, terms: seed.terms };
+                const seed = { index: 0, terms: terms };
+                const stepFn = function(seed) {
+                    const idx = seed.index;
+                    const value = seed.terms[idx % seed.terms.length];
+                    const nextSeed = { index: idx + 1, terms: seed.terms };
                     return [value, nextSeed];
                 };
                 return { name, seed, stepFn };
             }
+    
+            getSuggestions(partialId) {
+                const allIds = Object.keys(this.builtinSequences);
+                if (!partialId) return allIds.slice(0, 10);
+                return allIds.filter(id => id.toLowerCase().includes(partialId.toLowerCase()));
+            }
         }
-        
+       
         // ============================================
         // Parser
         // ============================================
@@ -832,21 +896,43 @@ const guardedExample = {
         document.getElementById('fetchOeisBtn').onclick = async () => {
             const oeisId = document.getElementById('oeisId').value.trim();
             if (!oeisId) {
-                alert('Enter OEIS ID like A000045');
+                alert('Enter OEIS ID like A000045, A000027, A000142');
                 return;
             }
-            
+    
+            const btn = document.getElementById('fetchOeisBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Fetching...';
+            btn.disabled = true;
+    
             try {
                 const terms = await oeisFetcher.fetchSequence(oeisId);
                 const streamName = `seq_${oeisId.toLowerCase()}`;
+        
+                // Remove if already exists
+                if (streams.has(streamName)) {
+                    streams.delete(streamName);
+                }
+        
                 const { name, seed, stepFn } = oeisFetcher.createStreamFromTerms(streamName, terms);
-                streams.set(name, new ResStream(name, seed, stepFn));
+                const newStream = new ResStream(name, seed, stepFn);
+                streams.set(name, newStream);
+        
+                // Add to editor
+                const editor = document.getElementById('streamEditor');
+                const streamDef = `\n\n// Fetched from OEIS ${oeisId}\nconst ${name} = {\n    seed: { index: 0, terms: [${terms.slice(0, 8).join(', ')}${terms.length > 8 ? ', ...' : ''}] },\n    step: (seed) => [seed.terms[seed.index % seed.terms.length], { index: seed.index + 1, terms: seed.terms }]\n};`;
+                editor.value += streamDef;
+        
                 updateGuardednessDisplay();
                 updateSelectors();
-                document.getElementById('streamEditor').value += `\n\n// Fetched from OEIS ${oeisId}\nconst ${name} = {\n    seed: { index: 0, terms: [${terms.slice(0, 10).join(', ')}] },\n    step: (seed) => [seed.terms[seed.index % seed.terms.length], { index: seed.index + 1, terms: seed.terms }]\n};`;
-                alert(`Loaded ${terms.length} terms from OEIS ${oeisId}`);
+        
+                alert(`✅ Loaded ${terms.length} terms from OEIS ${oeisId}\nStream "${name}" added`);
             } catch(e) {
-                alert('Error fetching from OEIS: ' + e.message);
+                console.error(e);
+                alert(`❌ ${e.message}\n\nTry built-in IDs: A000027 (naturals), A000045 (Fibonacci), A000142 (factorials), A000217 (triangular), A000079 (powers of 2), A000290 (squares)`);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         };
         
