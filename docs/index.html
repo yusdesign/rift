@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resolutive Coinduction Explorer</title>
+    <title>Resolutive Coinduction Explorer | Parametric Guardedness · OEIS · Bisimulation</title>
     <style>
         * {
             margin: 0;
@@ -98,7 +98,7 @@
         }
 
         textarea.editor {
-            min-height: 200px;
+            min-height: 180px;
         }
 
         .btn {
@@ -272,17 +272,39 @@
             color: var(--accent-warning);
         }
 
-        .status-badge {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 1px;
-            margin-right: 6px;
+        .guard-level-selector {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+            background: var(--bg-tertiary);
+            padding: 0.25rem;
         }
 
-        .status-productive { background: var(--accent-success); }
-        .status-unguarded { background: var(--accent-error); }
-        .status-unknown { background: var(--accent-warning); }
+        .guard-level-btn {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .guard-level-btn.active {
+            border-color: var(--accent-info);
+            background: var(--accent-info);
+            color: white;
+        }
+
+        .param-card {
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid;
+        }
+
+        .param-strict { border-left-color: var(--accent-error); }
+        .param-moderate { border-left-color: var(--accent-warning); }
+        .param-lax { border-left-color: var(--accent-info); }
+        .param-minimal { border-left-color: var(--accent-success); }
 
         ::-webkit-scrollbar {
             width: 6px;
@@ -308,52 +330,58 @@
 <body>
     <div class="header">
         <h1>🔄 Resolutive Coinduction Explorer</h1>
-        <div class="subtitle">Interactive Bisimulation · Guardedness Checking · OEIS Integration</div>
+        <div class="subtitle">Parametric Guardedness · OEIS Integration · Bisimulation · Visual Stream Comparison</div>
     </div>
 
     <div class="app-container">
-        <!-- Left Panel: Editor -->
+        <!-- Left Panel: Editor & OEIS -->
         <div class="panel">
             <div class="panel-header">
                 <span>📝 Stream Definitions</span>
                 <button class="btn btn-secondary" id="loadExampleBtn">📚 Example</button>
             </div>
             <div class="panel-content">
-                <textarea id="streamEditor" class="editor" rows="10" placeholder='Define streams as valid JS object...'></textarea>
+                <textarea id="streamEditor" class="editor" rows="8" placeholder='Define streams as valid JS object...'></textarea>
                 <div class="controls" style="margin-top: 0.75rem;">
                     <button class="btn btn-primary" id="runStreamsBtn">▶ Run & Check</button>
                     <button class="btn btn-secondary" id="clearStreamsBtn">🗑 Clear</button>
                 </div>
                 
-                <!-- OEIS Panel -->
+                <!-- OEIS Panel with Preview -->
                 <div class="oeis-panel">
-                    <input type="text" id="oeisId" placeholder="OEIS ID (e.g., A000045)" style="flex: 1;">
-                    <button class="btn btn-secondary" id="fetchOeisBtn">🔢 Fetch from OEIS</button>
-                </div>
-                <!-- OEIS Panel with suggestions -->
-                <div class="oeis-panel">
-                    <input type="text" id="oeisId" placeholder="OEIS ID (e.g., A000045)" list="oeisSuggestions" style="flex: 1;">
+                    <input type="text" id="oeisId" placeholder="OEIS ID (e.g., A000045)" list="oeisSuggestions" style="flex: 2;">
                     <datalist id="oeisSuggestions">
-                        <option value="A000027">A000027 - Natural numbers</option>
-                        <option value="A000045">A000045 - Fibonacci</option>
-                        <option value="A000142">A000142 - Factorials</option>
-                        <option value="A000217">A000217 - Triangular numbers</option>
-                        <option value="A000079">A000079 - Powers of 2</option>
-                        <option value="A000290">A000290 - Squares</option>
-                        <option value="A001477">A001477 - Nonnegative integers</option>
-                        <option value="A000004">A000004 - All zeros</option>
+                        <option value="A000027">Natural numbers (1,2,3...)</option>
+                        <option value="A000045">Fibonacci (0,1,1,2,3,5...)</option>
+                        <option value="A000142">Factorials (1,1,2,6,24...)</option>
+                        <option value="A000217">Triangular (0,1,3,6,10...)</option>
+                        <option value="A000079">Powers of 2 (1,2,4,8...)</option>
+                        <option value="A000290">Squares (0,1,4,9,16...)</option>
+                        <option value="A001477">Nonnegative (0,1,2,3...)</option>
+                        <option value="A000004">All zeros</option>
+                        <option value="A000012">All ones</option>
+                        <option value="A000034">Periodic 1,2</option>
                     </datalist>
-                    <button class="btn btn-secondary" id="fetchOeisBtn">🔢 Fetch</button>
+                    <button class="btn btn-secondary" id="previewOeisBtn">👁️ Preview</button>
+                    <button class="btn btn-primary" id="fetchOeisBtn">🔢 Fetch</button>
                 </div>
+                <div id="oeisPreview" style="font-size: 0.7rem; color: var(--text-secondary); padding: 0.25rem; display: none; margin-top: 0.25rem;"></div>
+                
                 <div id="streamList" style="margin-top: 0.75rem;"></div>
             </div>
         </div>
 
-        <!-- Middle Panel: Bisimulation -->
+        <!-- Middle Panel: Bisimulation & Visualizer -->
         <div class="panel">
             <div class="panel-header">
                 <span>🔍 Bisimulation Checker</span>
-                <button class="btn btn-secondary" id="checkGuardednessBtn">🛡️ Check All Guardedness</button>
+                <div class="guard-level-selector">
+                    <span style="font-size:0.7rem;">Guardedness:</span>
+                    <button class="guard-level-btn" data-level="STRICT">🔒 Strict</button>
+                    <button class="guard-level-btn active" data-level="MODERATE">⚖️ Moderate</button>
+                    <button class="guard-level-btn" data-level="LAX">🌀 Lax</button>
+                    <button class="guard-level-btn" data-level="MINIMAL">🔓 Minimal</button>
+                </div>
             </div>
             <div class="panel-content">
                 <select id="leftStreamSelect">
@@ -389,16 +417,17 @@
             </div>
         </div>
 
-        <!-- Right Panel: Method Tree -->
+        <!-- Right Panel: Parametric Analysis & Method Tree -->
         <div class="panel">
             <div class="panel-header">
-                <span>🌳 Method Tree & Inference</span>
-                <button class="btn btn-secondary" id="inferRelationsBtn">✨ Infer</button>
+                <span>🌳 Parametric Analysis</span>
+                <button class="btn btn-secondary" id="inferRelationsBtn">✨ Infer Relations</button>
             </div>
             <div class="panel-content">
+                <div id="parametricAnalysis" style="margin-bottom: 1rem;"></div>
                 <div id="methodTree" class="method-tree"></div>
                 <details style="margin-top: 0.75rem;">
-                    <summary style="cursor: pointer; font-size: 0.8rem;">Inferred Relations</summary>
+                    <summary style="cursor: pointer; font-size: 0.8rem;">📊 Inferred Bisimulation Relations</summary>
                     <div id="relationsList" style="margin-top: 0.5rem; font-size: 0.7rem;"></div>
                 </details>
             </div>
@@ -416,6 +445,7 @@
                 this.stepFn = stepFn;
                 this.cache = new Map();
                 this.guardedness = null;
+                this.parametricResults = null;
             }
             
             step(s) {
@@ -438,109 +468,163 @@
         }
         
         // ============================================
-        // FULL GUARDEDNESS CHECKER
+        // PARAMETRIC GUARDEDNESS CHECKER
         // ============================================
-        class GuardednessChecker {
+        class ParametricGuardednessChecker {
             constructor() {
-                this.constructors = ['Cons', '::', '∷', 'Stream', 'delay'];
-                this.guardedPatterns = [
-                    { pattern: /\[([^,\]]+),\s*\(\)\s*=>\s*(\w+)/, desc: "Thunk-wrapped recursive call" },
-                    { pattern: /return\s+\[[^,]+,\s*\(\)\s*=>/, desc: "Return under constructor" },
-                    { pattern: /∷\s*\(/, desc: "Cons operator guard" }
-                ];
+                this.guardLevels = {
+                    STRICT: { name: '🔒 Strict', threshold: 80, desc: 'Thunk-wrapped recursion only' },
+                    MODERATE: { name: '⚖️ Moderate', threshold: 60, desc: 'Lambda or constructor guard' },
+                    LAX: { name: '🌀 Lax', threshold: 40, desc: 'Any tail call allowed' },
+                    MINIMAL: { name: '🔓 Minimal', threshold: 20, desc: 'Bounded exploration only' }
+                };
+                this.currentLevel = 'MODERATE';
             }
             
-            checkStream(stream) {
+            setLevel(level) {
+                if (this.guardLevels[level]) {
+                    this.currentLevel = level;
+                    return true;
+                }
+                return false;
+            }
+            
+            checkStream(stream, level = null) {
+                const useLevel = level || this.currentLevel;
+                const config = this.guardLevels[useLevel];
+                
                 const result = {
                     name: stream.name,
+                    level: useLevel,
+                    levelName: config.name,
                     productive: false,
+                    partial: false,
                     issues: [],
-                    score: 0
+                    score: 0,
+                    alternativeInference: null
                 };
                 
                 const stepStr = stream.stepFn.toString();
+                let score = 0;
                 
-                // Check 1: Does step return an array with constructor?
+                // Check 1: Return array structure
                 const hasArrayReturn = /return\s*\[/.test(stepStr) || /=>\s*\[/.test(stepStr);
-                if (!hasArrayReturn) {
-                    result.issues.push("Step function does not return array [value, next]");
+                if (hasArrayReturn) {
+                    score += 25;
                 } else {
-                    result.score += 20;
+                    result.issues.push("No array return [value, next]");
                 }
                 
-                // Check 2: Is recursive call under a thunk (() => ...)?
+                // Check 2: Guard type (depends on level)
                 const hasThunk = /\(\)\s*=>/.test(stepStr);
-                const hasLambda = /=>\s*\w+/.test(stepStr);
-                if (hasThunk || hasLambda) {
-                    result.score += 40;
-                } else {
-                    const recursiveCall = new RegExp(`${stream.name}\\s*\\(`, 'i');
-                    if (recursiveCall.test(stepStr)) {
-                        result.issues.push("Direct recursive call without thunk wrapper — may cause infinite loop");
-                    }
+                const hasAnyLambda = /=>\s*\(?[a-zA-Z_]/;
+                const hasConstructor = /Cons|∷|::|Stream/.test(stepStr);
+                
+                switch(useLevel) {
+                    case 'STRICT':
+                        if (hasThunk) score += 45;
+                        else result.issues.push("Strict: requires thunk wrapper () => ...");
+                        break;
+                    case 'MODERATE':
+                        if (hasThunk) score += 45;
+                        else if (hasAnyLambda) score += 30;
+                        else if (hasConstructor) score += 20;
+                        else result.issues.push("Moderate: no lambda or constructor found");
+                        break;
+                    case 'LAX':
+                        if (hasThunk) score += 35;
+                        else if (hasAnyLambda) score += 25;
+                        else score += 15;
+                        break;
+                    case 'MINIMAL':
+                        score += 10;
+                        break;
                 }
                 
-                // Check 3: Detect value production before recursion
+                // Check 3: Value production
                 const hasValueBeforeRecur = /return\s*\[[^,\]]+,\s*/.test(stepStr);
-                if (hasValueBeforeRecur) {
-                    result.score += 30;
-                }
+                if (hasValueBeforeRecur) score += 25;
+                else result.issues.push("May not produce value before recursion");
                 
-                // Check 4: Semantic simulation (run a few steps safely)
+                // Check 4: Runtime simulation
                 try {
                     let seed = stream.seed;
                     let stepsRun = 0;
-                    let maxTestSteps = 10;
-                    let hung = false;
+                    let maxSteps = (useLevel === 'MINIMAL') ? 5 : 10;
                     
-                    const timeout = setTimeout(() => { hung = true; }, 100);
-                    
-                    for (let i = 0; i < maxTestSteps && !hung; i++) {
+                    for (let i = 0; i < maxSteps; i++) {
                         const [val, next] = stream.step(seed);
-                        if (val === undefined && next === undefined) {
-                            result.issues.push(`Step ${i} produced undefined`);
-                            break;
-                        }
+                        if (val === undefined) break;
                         seed = next;
                         stepsRun++;
                     }
-                    
-                    clearTimeout(timeout);
-                    
-                    if (!hung && stepsRun === maxTestSteps) {
-                        result.score += 10;
-                        result.productive = result.score >= 60;
-                    } else if (hung) {
-                        result.issues.push("Possible non-termination — step function may not be productive");
-                    } else {
-                        result.productive = result.score >= 50;
-                    }
+                    score += Math.min(15, stepsRun);
                 } catch(e) {
-                    result.issues.push(`Runtime error: ${e.message}`);
+                    result.issues.push(`Runtime: ${e.message}`);
                 }
                 
-                result.productive = result.score >= 60;
+                result.score = score;
+                result.productive = score >= config.threshold;
+                
+                // Generate alternative inference
+                if (!result.productive && useLevel !== 'MINIMAL') {
+                    const nextLevels = { 'STRICT': 'MODERATE', 'MODERATE': 'LAX', 'LAX': 'MINIMAL' };
+                    const nextLevel = nextLevels[useLevel];
+                    if (nextLevel) {
+                        result.alternativeInference = {
+                            suggestedLevel: nextLevel,
+                            description: this.guardLevels[nextLevel].desc,
+                            wouldBeProductive: (score + 15) >= this.guardLevels[nextLevel].threshold
+                        };
+                    }
+                }
+                
                 return result;
             }
             
-            getAllStatus(streams) {
+            compareLevels(stream) {
+                const results = {};
+                for (const level of Object.keys(this.guardLevels)) {
+                    results[level] = this.checkStream(stream, level);
+                }
+                return results;
+            }
+            
+            inferOptimalLevel(stream) {
+                const comparisons = this.compareLevels(stream);
+                for (const [level, result] of Object.entries(comparisons)) {
+                    if (result.productive) {
+                        return {
+                            optimalLevel: level,
+                            levelName: this.guardLevels[level].name,
+                            score: result.score,
+                            inference: `Stream "${stream.name}" is ${this.guardLevels[level].name} productive`
+                        };
+                    }
+                }
+                return {
+                    optimalLevel: 'MINIMAL',
+                    levelName: this.guardLevels.MINIMAL.name,
+                    inference: `Stream "${stream.name}" may require bounded evaluation`
+                };
+            }
+            
+            getAllParametricStatus(streams) {
                 const results = [];
                 for (const stream of streams.values()) {
-                    const check = this.checkStream(stream);
-                    stream.guardedness = check;
-                    results.push(check);
+                    const comparisons = this.compareLevels(stream);
+                    stream.parametricResults = comparisons;
+                    results.push({ name: stream.name, comparisons });
                 }
                 return results;
             }
         }
         
-
         // ============================================
-        // FIXED OEIS Integration (CORS-safe)
+        // OEIS Integration (CORS-safe)
         // ============================================
         class OEISFetcher {
             constructor() {
-                // Built-in common sequences (fallback)
                 this.builtinSequences = {
                     'A000027': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
                     'A000045': [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181],
@@ -549,84 +633,20 @@
                     'A000079': [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768],
                     'A000290': [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361],
                     'A001477': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                    'A000004': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    'A000004': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    'A000012': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    'A000034': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]
                 };
             }
-    
+            
             async fetchSequence(id) {
                 const normId = id.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        
-                // Check built-in first
                 if (this.builtinSequences[normId]) {
                     return this.builtinSequences[normId];
                 }
-        
-                // Try multiple proxy strategies
-                const proxies = [
-                    `https://corsproxy.io/?url=${encodeURIComponent(`https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`)}`,
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`)}`,
-                    `https://cors-anywhere.herokuapp.com/https://oeis.org/${normId}/b${normId.toLowerCase()}.txt`
-                ];
-        
-                for (const proxyUrl of proxies) {
-                    try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
-                        const response = await fetch(proxyUrl, {
-                            signal: controller.signal,
-                            headers: { 'Accept': 'text/plain' }
-                        });
-                        clearTimeout(timeoutId);
-                
-                        if (response.ok) {
-                            const text = await response.text();
-                            const terms = this.parseOeisText(text);
-                            if (terms.length >= 5) {
-                                return terms;
-                            }
-                        }
-                    } catch(e) {
-                        // Try next proxy
-                        continue;
-                    }
-                }
-        
-                // Try JSON API as last resort
-                try {
-                    const jsonUrl = `https://corsproxy.io/?url=${encodeURIComponent(`https://oeis.org/search?q=id:${normId}&fmt=json`)}`;
-                    const response = await fetch(jsonUrl);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.results && data.results[0] && data.results[0].data) {
-                            const terms = data.results[0].data.split(',').slice(0, 30).map(Number);
-                            if (terms.length >= 5) {
-                                return terms;
-                            }
-                        }
-                    }
-                } catch(e) {
-                    // Fall through
-                }
-        
-                throw new Error(`Cannot fetch ${normId}. Try built-in IDs: A000027, A000045, A000142, A000217, A000079, A000290`);
+                throw new Error(`Sequence ${normId} not found. Try: A000027, A000045, A000142, A000217, A000079, A000290, A001477`);
             }
-    
-            parseOeisText(text) {
-                const terms = [];
-                const lines = text.split('\n');
-                for (const line of lines) {
-                    const match = line.match(/^\d+\s+(-?\d+)/);
-                    if (match && terms.length < 30) {
-                        const val = parseInt(match[1]);
-                        if (!isNaN(val)) {
-                            terms.push(val);
-                        }
-                    }
-                }
-                return terms;
-            }
-    
+            
             createStreamFromTerms(name, terms) {
                 const seed = { index: 0, terms: terms };
                 const stepFn = function(seed) {
@@ -637,22 +657,14 @@
                 };
                 return { name, seed, stepFn };
             }
-    
-            getSuggestions(partialId) {
-                const allIds = Object.keys(this.builtinSequences);
-                if (!partialId) return allIds.slice(0, 10);
-                return allIds.filter(id => id.toLowerCase().includes(partialId.toLowerCase()));
-            }
         }
-       
+        
         // ============================================
         // Parser
         // ============================================
         function parseStreamsFromCode(code) {
             const result = {};
             const cleanCode = code.replace(/\/\/.*$/gm, '');
-            
-            // Match const name = { seed: ..., step: ... }
             const objRegex = /const\s+(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
             
             let match;
@@ -671,7 +683,6 @@
                 const stepFn = new Function(params, `return [${valExpr}, ${nextExpr}];`);
                 result[name] = { seed, step: stepFn };
             }
-            
             return result;
         }
         
@@ -687,13 +698,11 @@
                 while (queue.length && path.length < maxSteps) {
                     const [s1, s2] = queue.shift();
                     const key = `${JSON.stringify(s1)}|${JSON.stringify(s2)}`;
-                    
                     if (visited.has(key)) continue;
                     visited.add(key);
                     
                     const [v1, n1] = stream1.step(s1);
                     const [v2, n2] = stream2.step(s2);
-                    
                     path.push({ step: path.length, v1, v2 });
                     
                     if (v1 !== v2) {
@@ -715,7 +724,7 @@
         let snapshots = [];
         
         const oeisFetcher = new OEISFetcher();
-        const guardednessChecker = new GuardednessChecker();
+        const parametricChecker = new ParametricGuardednessChecker();
         const bisimProver = new BisimulationProver();
         
         // ============================================
@@ -729,19 +738,17 @@
             }
             
             container.innerHTML = Array.from(streams.values()).map(stream => {
-                const guarded = stream.guardedness;
-                const statusClass = guarded?.productive ? 'guarded-success' : (guarded ? 'guarded-fail' : '');
-                const statusIcon = guarded?.productive ? '✓' : (guarded ? '⚠' : '?');
+                const currentCheck = parametricChecker.checkStream(stream);
+                const statusClass = currentCheck.productive ? 'guarded-success' : 'guarded-fail';
                 return `
                     <div class="stream-card ${statusClass}">
                         <div class="step-badge">
                             📊 ${stream.name}
-                            <span class="guarded-badge">${statusIcon} ${guarded?.productive ? 'Guarded' : (guarded ? 'Check Failed' : 'Unknown')}</span>
+                            <span class="guarded-badge">${currentCheck.productive ? '✓' : '⚠'} ${parametricChecker.guardLevels[parametricChecker.currentLevel].name}</span>
                         </div>
                         <div class="value-display">
                             Prefix: <code>[${stream.take(5).join(', ')}...]</code>
                         </div>
-                        ${guarded?.issues?.length ? `<div style="font-size:0.7rem; color:var(--accent-error);">${guarded.issues[0]}</div>` : ''}
                     </div>
                 `;
             }).join('');
@@ -751,14 +758,13 @@
             const leftSelect = document.getElementById('leftStreamSelect');
             const rightSelect = document.getElementById('rightStreamSelect');
             const options = Array.from(streams.keys()).map(name => `<option value="${name}">${name}</option>`).join('');
-            
             leftSelect.innerHTML = '<option value="">Left Stream</option>' + options;
             rightSelect.innerHTML = '<option value="">Right Stream</option>' + options;
         }
         
         function updateGuardednessDisplay() {
-            const results = guardednessChecker.getAllStatus(streams);
-            const productive = results.filter(r => r.productive).length;
+            const results = parametricChecker.getAllParametricStatus(streams);
+            const productive = results.filter(r => r.comparisons[parametricChecker.currentLevel]?.productive).length;
             const container = document.getElementById('guardednessResult');
             if (streams.size === 0) {
                 container.innerHTML = '';
@@ -766,18 +772,56 @@
             }
             container.innerHTML = `
                 <div style="padding: 0.5rem; background: var(--bg-tertiary);">
-                    <strong>🛡️ Guardedness Summary:</strong> ${productive}/${streams.size} productive streams
-                    ${productive === streams.size ? ' ✓ All guarded' : ' ⚠ Some streams may not be productive'}
+                    <strong>🛡️ ${parametricChecker.guardLevels[parametricChecker.currentLevel].name} Guardedness:</strong> 
+                    ${productive}/${streams.size} productive
+                    ${productive === streams.size ? '✓' : '⚠'}
                 </div>
             `;
             updateStreamList();
+            updateParametricAnalysis();
+        }
+        
+        function updateParametricAnalysis() {
+            const container = document.getElementById('parametricAnalysis');
+            if (streams.size === 0) {
+                container.innerHTML = '<div style="color: var(--text-secondary);">No streams loaded</div>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+            for (const stream of streams.values()) {
+                const comparisons = parametricChecker.compareLevels(stream);
+                const optimal = parametricChecker.inferOptimalLevel(stream);
+                
+                html += `
+                    <div style="background: var(--bg-tertiary); padding: 0.5rem;">
+                        <strong>${stream.name}</strong>
+                        <div style="font-size: 0.7rem; margin-top: 0.25rem;">
+                            <div>🎯 ${optimal.inference}</div>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;">
+                                ${Object.entries(comparisons).map(([level, res]) => `
+                                    <span style="color: ${res.productive ? 'var(--accent-success)' : 'var(--accent-error)'}">
+                                        ${parametricChecker.guardLevels[level].name}: ${res.productive ? '✓' : '✗'} (${res.score})
+                                    </span>
+                                `).join('')}
+                            </div>
+                            ${comparisons.MODERATE.alternativeInference ? `
+                                <div style="color: var(--accent-info); margin-top: 0.25rem;">
+                                    💡 Try ${comparisons.MODERATE.alternativeInference.suggestedLevel}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            container.innerHTML = html;
         }
         
         function generateSnapshots(left, right, maxSteps) {
             snapshots = [];
             let s1 = left.seed;
             let s2 = right.seed;
-            
             for (let i = 0; i < maxSteps; i++) {
                 try {
                     const [v1, n1] = left.step(s1);
@@ -785,11 +829,8 @@
                     snapshots.push({ step: i, v1, v2, match: v1 === v2 });
                     s1 = n1;
                     s2 = n2;
-                } catch(e) {
-                    break;
-                }
+                } catch(e) { break; }
             }
-            
             const slider = document.getElementById('stepSlider');
             slider.max = Math.max(0, snapshots.length - 1);
             currentStep = 0;
@@ -802,7 +843,6 @@
                 container.innerHTML = '<div style="color: var(--text-secondary);">Run a comparison first</div>';
                 return;
             }
-            
             const html = snapshots.slice(0, currentStep + 1).map((s, idx) => `
                 <div class="stream-card ${idx === currentStep ? 'latest' : ''} ${!s.match ? 'divergent' : ''}" style="min-width: 100px;">
                     <div class="step-badge">#${s.step}</div>
@@ -813,7 +853,6 @@
                     </div>
                 </div>
             `).join('');
-            
             container.innerHTML = html;
             document.getElementById('stepSlider').value = currentStep;
         }
@@ -838,12 +877,6 @@ const zeros = {
 const naturals = {
     seed: 0,
     step: (n) => [n, n + 1]
-};
-
-// Guarded stream (proper thunk)
-const guardedExample = {
-    seed: 0,
-    step: (n) => [n, () => guardedExample.step(n + 1)]
 };`;
             document.getElementById('streamEditor').value = exampleText;
         };
@@ -852,35 +885,23 @@ const guardedExample = {
             try {
                 const code = document.getElementById('streamEditor').value;
                 const defs = parseStreamsFromCode(code);
-                
                 streams.clear();
                 for (const [name, def] of Object.entries(defs)) {
                     if (def.seed !== undefined && def.step) {
                         streams.set(name, new ResStream(name, def.seed, def.step));
                     }
                 }
-                
                 if (streams.size === 0) {
                     alert('No valid streams found. Use format:\nconst name = { seed: value, step: (param) => [value, next] }');
                 }
-                
                 updateGuardednessDisplay();
                 updateSelectors();
                 document.getElementById('comparisonResult').innerHTML = '';
                 document.getElementById('streamPrefix').innerHTML = '';
                 snapshots = [];
             } catch(e) {
-                console.error(e);
                 alert('Error parsing: ' + e.message);
             }
-        };
-        
-        document.getElementById('checkGuardednessBtn').onclick = () => {
-            if (streams.size === 0) {
-                alert('Load streams first');
-                return;
-            }
-            updateGuardednessDisplay();
         };
         
         document.getElementById('clearStreamsBtn').onclick = () => {
@@ -889,47 +910,66 @@ const guardedExample = {
             updateSelectors();
             document.getElementById('comparisonResult').innerHTML = '';
             document.getElementById('guardednessResult').innerHTML = '';
+            document.getElementById('parametricAnalysis').innerHTML = '';
             document.getElementById('streamPrefix').innerHTML = '';
             snapshots = [];
+        };
+        
+        // Guard level buttons
+        document.querySelectorAll('.guard-level-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.guard-level-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                parametricChecker.setLevel(btn.dataset.level);
+                updateGuardednessDisplay();
+            };
+        });
+        
+        // OEIS Preview
+        document.getElementById('previewOeisBtn').onclick = async () => {
+            const oeisId = document.getElementById('oeisId').value.trim();
+            const previewDiv = document.getElementById('oeisPreview');
+            if (!oeisId) {
+                previewDiv.style.display = 'none';
+                return;
+            }
+            try {
+                const terms = await oeisFetcher.fetchSequence(oeisId);
+                previewDiv.innerHTML = `📋 ${oeisId}: [${terms.slice(0, 12).join(', ')}${terms.length > 12 ? ', ...' : ''}] (${terms.length} terms)`;
+                previewDiv.style.display = 'block';
+                previewDiv.style.background = 'rgba(108, 99, 255, 0.1)';
+                previewDiv.style.padding = '0.5rem';
+            } catch(e) {
+                previewDiv.innerHTML = `❌ ${e.message}`;
+                previewDiv.style.display = 'block';
+                previewDiv.style.background = 'rgba(255, 107, 107, 0.1)';
+            }
         };
         
         document.getElementById('fetchOeisBtn').onclick = async () => {
             const oeisId = document.getElementById('oeisId').value.trim();
             if (!oeisId) {
-                alert('Enter OEIS ID like A000045, A000027, A000142');
+                alert('Enter OEIS ID like A000045');
                 return;
             }
-    
             const btn = document.getElementById('fetchOeisBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '⏳ Fetching...';
             btn.disabled = true;
-    
             try {
                 const terms = await oeisFetcher.fetchSequence(oeisId);
                 const streamName = `seq_${oeisId.toLowerCase()}`;
-        
-                // Remove if already exists
-                if (streams.has(streamName)) {
-                    streams.delete(streamName);
-                }
-        
+                if (streams.has(streamName)) streams.delete(streamName);
                 const { name, seed, stepFn } = oeisFetcher.createStreamFromTerms(streamName, terms);
-                const newStream = new ResStream(name, seed, stepFn);
-                streams.set(name, newStream);
-        
-                // Add to editor
+                streams.set(name, new ResStream(name, seed, stepFn));
                 const editor = document.getElementById('streamEditor');
                 const streamDef = `\n\n// Fetched from OEIS ${oeisId}\nconst ${name} = {\n    seed: { index: 0, terms: [${terms.slice(0, 8).join(', ')}${terms.length > 8 ? ', ...' : ''}] },\n    step: (seed) => [seed.terms[seed.index % seed.terms.length], { index: seed.index + 1, terms: seed.terms }]\n};`;
                 editor.value += streamDef;
-        
                 updateGuardednessDisplay();
                 updateSelectors();
-        
-                alert(`✅ Loaded ${terms.length} terms from OEIS ${oeisId}\nStream "${name}" added`);
+                alert(`✅ Loaded ${terms.length} terms from OEIS ${oeisId}`);
             } catch(e) {
-                console.error(e);
-                alert(`❌ ${e.message}\n\nTry built-in IDs: A000027 (naturals), A000045 (Fibonacci), A000142 (factorials), A000217 (triangular), A000079 (powers of 2), A000290 (squares)`);
+                alert(`❌ ${e.message}`);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -939,34 +979,20 @@ const guardedExample = {
         document.getElementById('compareBtn').onclick = () => {
             const leftName = document.getElementById('leftStreamSelect').value;
             const rightName = document.getElementById('rightStreamSelect').value;
-            
             if (!leftName || !rightName || !streams.has(leftName) || !streams.has(rightName)) {
                 alert('Please select both streams');
                 return;
             }
-            
             const left = streams.get(leftName);
             const right = streams.get(rightName);
-            
             const result = bisimProver.prove(left, right, 100);
             currentComparison = { left, right, result, leftName, rightName };
-            
             const resultDiv = document.getElementById('comparisonResult');
             if (result.bisimilar) {
-                resultDiv.innerHTML = `
-                    <div class="comparison-result success">
-                        ✓ BISIMILAR · Checked ${result.stepsChecked} steps
-                    </div>
-                `;
+                resultDiv.innerHTML = `<div class="comparison-result success">✓ BISIMILAR · Checked ${result.stepsChecked} steps</div>`;
             } else {
-                resultDiv.innerHTML = `
-                    <div class="comparison-result failure">
-                        ✗ DIVERGENT at step ${result.counterexample.step}<br>
-                        <small>${leftName}: ${JSON.stringify(result.counterexample.v1)} ≠ ${rightName}: ${JSON.stringify(result.counterexample.v2)}</small>
-                    </div>
-                `;
+                resultDiv.innerHTML = `<div class="comparison-result failure">✗ DIVERGENT at step ${result.counterexample.step}<br><small>${leftName}: ${JSON.stringify(result.counterexample.v1)} ≠ ${rightName}: ${JSON.stringify(result.counterexample.v2)}</small></div>`;
             }
-            
             generateSnapshots(left, right, 50);
         };
         
@@ -987,10 +1013,8 @@ const guardedExample = {
         };
         
         document.getElementById('stopBtn').onclick = () => {
-            if (animationInterval) {
-                clearInterval(animationInterval);
-                animationInterval = null;
-            }
+            if (animationInterval) clearInterval(animationInterval);
+            animationInterval = null;
         };
         
         document.getElementById('resetBtn').onclick = () => {
@@ -1013,8 +1037,8 @@ const guardedExample = {
                 streams: { left: currentComparison.leftName, right: currentComparison.rightName },
                 result: currentComparison.result,
                 guardedness: {
-                    left: streams.get(currentComparison.leftName)?.guardedness,
-                    right: streams.get(currentComparison.rightName)?.guardedness
+                    left: parametricChecker.checkStream(currentComparison.left),
+                    right: parametricChecker.checkStream(currentComparison.right)
                 },
                 timestamp: new Date().toISOString(),
                 snapshots: snapshots
@@ -1040,7 +1064,6 @@ open import Data.Nat
 
 -- Status: ${currentComparison.result.bisimilar ? 'BISIMILAR ✓' : 'NOT BISIMILAR ✗'}
 -- Checked ${currentComparison.result.stepsChecked} steps
--- Guardedness: ${streams.get(currentComparison.leftName)?.guardedness?.productive ? 'Left productive' : 'Left may not be productive'}
 
 postulate
   left right : Stream ℕ
@@ -1058,95 +1081,45 @@ postulate
         document.getElementById('inferRelationsBtn').onclick = () => {
             const leftName = document.getElementById('leftStreamSelect').value;
             const rightName = document.getElementById('rightStreamSelect').value;
-            
             if (!leftName || !rightName || !streams.has(leftName) || !streams.has(rightName)) {
                 alert('Select both streams first');
                 return;
             }
-            
             const left = streams.get(leftName);
             const right = streams.get(rightName);
             const relations = [];
             const visited = new Set();
             const queue = [[left.seed, right.seed]];
-            
             while (queue.length && relations.length < 20) {
                 const [s1, s2] = queue.shift();
                 const key = `${JSON.stringify(s1)}|${JSON.stringify(s2)}`;
                 if (visited.has(key)) continue;
                 visited.add(key);
-                
                 const [v1, n1] = left.step(s1);
                 const [v2, n2] = right.step(s2);
-                
-                relations.push({
-                    leftSeed: JSON.stringify(s1).slice(0, 40),
-                    rightSeed: JSON.stringify(s2).slice(0, 40),
-                    leftValue: v1,
-                    rightValue: v2,
-                    match: v1 === v2
-                });
-                
+                relations.push({ match: v1 === v2, leftSeed: JSON.stringify(s1).slice(0, 30), rightSeed: JSON.stringify(s2).slice(0, 30), leftValue: v1, rightValue: v2 });
                 queue.push([n1, n2]);
             }
-            
             const container = document.getElementById('relationsList');
-            container.innerHTML = relations.map(r => `
-                <div style="padding: 0.3rem; border-bottom: 1px solid var(--border);">
-                    <span style="color: ${r.match ? 'var(--accent-success)' : 'var(--accent-error)'}">${r.match ? '✓' : '✗'}</span>
-                    ${r.leftSeed}… → ${r.leftValue} | ${r.rightSeed}… → ${r.rightValue}
-                </div>
-            `).join('');
+            container.innerHTML = relations.map(r => `<div style="padding: 0.3rem; border-bottom: 1px solid var(--border);"><span style="color: ${r.match ? 'var(--accent-success)' : 'var(--accent-error)'}">${r.match ? '✓' : '✗'}</span> ${r.leftSeed}… → ${r.leftValue} | ${r.rightSeed}… → ${r.rightValue}</div>`).join('');
         };
         
         function populateMethodTree() {
             const treeHtml = `
                 <div class="tree-root">📐 Resolutive Coinduction Method</div>
-                <div class="tree-node"><span class="tree-label">Layer 1: Foundation</span>
-                    <div class="tree-node">νX.F(X) — Greatest Fixed Point</div>
-                    <div class="tree-node">μX.F(X) — Least Fixed Point</div>
-                    <div class="tree-node">Positivity / Monotonicity</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Layer 2: Core Rules</span>
-                    <div class="tree-node">νR-strong — Corecursion with seed witness</div>
-                    <div class="tree-node">Guardedness: recursive calls under constructors/thunks</div>
-                    <div class="tree-node">Productivity certificate</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Layer 3: Computation</span>
-                    <div class="tree-node">Curry–Howard: Corecursion as program</div>
-                    <div class="tree-node">Monad: S → A × T(S) × S</div>
-                    <div class="tree-node">Bisimulation as seed equality</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Layer 4: Proof Methods</span>
-                    <div class="tree-node">Bisimulation congruence</div>
-                    <div class="tree-node">Coinduction principle: F(Y) ⊢ Y ⇒ νX.F(X) ⊢ Y</div>
-                    <div class="tree-node">Induction for least fixed points</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Layer 5: Implementation ✓</span>
-                    <div class="tree-node">✓ Guardedness checker (syntactic + semantic)</div>
-                    <div class="tree-node">✓ Bisimulation prover (semi-automatic)</div>
-                    <div class="tree-node">✓ Visualizer — stream prefix explorer</div>
-                    <div class="tree-node">✓ Certificate export (JSON / Agda)</div>
-                    <div class="tree-node">✓ OEIS integration</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Layer 6: Applications</span>
-                    <div class="tree-node">Stream equivalence (infinite data)</div>
-                    <div class="tree-node">Process calculus bisimulations</div>
-                    <div class="tree-node">Liveness properties (temporal logic)</div>
-                </div>
-                <div class="tree-node"><span class="tree-label">Next Steps</span>
-                    <div class="tree-node">🔜 Full Coq/Agda backend integration</div>
-                    <div class="tree-node">🔜 WASM runtime for performance</div>
-                    <div class="tree-node">🔜 ML-based bisimulation discovery</div>
-                    <div class="tree-node">🔜 Temporal logic model checking</div>
-                </div>
+                <div class="tree-node"><span class="tree-label">Layer 1: Foundation</span><div class="tree-node">νX.F(X) — Greatest Fixed Point</div><div class="tree-node">μX.F(X) — Least Fixed Point</div></div>
+                <div class="tree-node"><span class="tree-label">Layer 2: Core Rules</span><div class="tree-node">νR-strong — Corecursion with seed witness</div><div class="tree-node">Parametric Guardedness (4 levels)</div></div>
+                <div class="tree-node"><span class="tree-label">Layer 3: Computation</span><div class="tree-node">Curry–Howard: Corecursion as program</div><div class="tree-node">Monad: S → A × T(S) × S</div></div>
+                <div class="tree-node"><span class="tree-label">Layer 4: Proof Methods</span><div class="tree-node">Bisimulation congruence · Coinduction principle</div></div>
+                <div class="tree-node"><span class="tree-label">Layer 5: Implementation ✓</span><div class="tree-node">✓ Parametric Guardedness · ✓ OEIS Integration</div><div class="tree-node">✓ Visualizer · ✓ Certificate Export</div></div>
+                <div class="tree-node"><span class="tree-label">Next Steps</span><div class="tree-node">🔜 Coq/Agda backend · 🔜 ML inference · 🔜 Temporal logic</div></div>
             `;
             document.getElementById('methodTree').innerHTML = treeHtml;
         }
         
         populateMethodTree();
         
-        // Auto-load example on startup
+        // Auto-load example
         setTimeout(() => {
             document.getElementById('loadExampleBtn').click();
             setTimeout(() => document.getElementById('runStreamsBtn').click(), 100);
