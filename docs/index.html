@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolutive Coinduction Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --text-primary: #e2e2e2;
+            --text-secondary: #a0a0b0;
+            --accent-success: #00d4aa;
+            --accent-error: #ff6b6b;
+            --accent-warning: #ffd93d;
+            --accent-info: #6c63ff;
+            --border: #2a2a3a;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Header - lighter */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-info);
+            display: inline-block;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 380px 1fr 400px;
+            gap: 0.75rem;
+            padding: 1rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Panels - square corners */
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: var(--bg-tertiary);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 140px);
+        }
+
+        /* Editor */
+        .editor {
+            background: #0a0a0f;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            border: 1px solid var(--border);
+            width: 100%;
+            resize: vertical;
+            color: var(--text-primary);
+            padding: 0.75rem;
+        }
+
+        textarea.editor {
+            min-height: 280px;
+        }
+
+        /* Buttons - square, no radius */
+        .btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent-info);
+            border-color: var(--accent-info);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(0.9);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-info);
+        }
+
+        /* Stream Cards - square */
+        .stream-card {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-info);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stream-card.latest {
+            border-left-color: var(--accent-success);
+            background: rgba(0, 212, 170, 0.08);
+        }
+
+        .stream-card.divergent {
+            border-left-color: var(--accent-error);
+            background: rgba(255, 107, 107, 0.08);
+        }
+
+        .step-badge {
+            background: var(--bg-primary);
+            padding: 0.15rem 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.35rem;
+        }
+
+        .value-display {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0.35rem 0;
+        }
+
+        .value-display code {
+            background: var(--bg-primary);
+            padding: 0.15rem 0.35rem;
+            font-size: 0.85rem;
+        }
+
+        /* Stream prefix */
+        .stream-prefix {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        /* Comparison result */
+        .comparison-result {
+            padding: 0.5rem;
+            margin: 0.75rem 0;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.85rem;
+            border: 1px solid;
+        }
+
+        .comparison-result.success {
+            background: rgba(0, 212, 170, 0.1);
+            border-color: var(--accent-success);
+            color: var(--accent-success);
+        }
+
+        .comparison-result.failure {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: var(--accent-error);
+            color: var(--accent-error);
+        }
+
+        /* Selects */
+        select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.6rem;
+            color: var(--text-primary);
+            width: 100%;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        /* Slider */
+        .slider {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        /* Controls row */
+        .controls {
+            display: flex;
+            gap: 0.35rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Export */
+        .export-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        /* Method tree */
+        .method-tree {
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .tree-node {
+            margin-left: 1.2rem;
+            position: relative;
+        }
+
+        .tree-node::before {
+            content: '├─';
+            position: absolute;
+            left: -1rem;
+            color: var(--accent-info);
+        }
+
+        .tree-root {
+            font-weight: 700;
+            color: var(--accent-success);
+            margin-bottom: 0.5rem;
+        }
+
+        .tree-label {
+            font-weight: 600;
+            color: var(--accent-warning);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Resolutive Coinduction Explorer</h1>
+        <div class="subtitle">Interactive Bisimulation & Guarded Corecursion — Formal Methods Toolchain</div>
+    </div>
+
+    <div class="app-container">
+        <!-- Left Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>📝 Stream Definitions</span>
+                <button class="btn btn-secondary" id="loadExampleBtn">📚 Example</button>
+            </div>
+            <div class="panel-content">
+                <textarea id="streamEditor" class="editor" rows="12" placeholder='Define streams as valid JS object...'></textarea>
+                <div class="controls" style="margin-top: 0.75rem;">
+                    <button class="btn btn-primary" id="runStreamsBtn">▶ Run</button>
+                    <button class="btn btn-secondary" id="clearStreamsBtn">🗑 Clear</button>
+                </div>
+                <div id="streamList" style="margin-top: 0.75rem;"></div>
+            </div>
+        </div>
+
+        <!-- Middle Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🔍 Bisimulation Checker</span>
+            </div>
+            <div class="panel-content">
+                <select id="leftStreamSelect">
+                    <option value="">Select Left Stream</option>
+                </select>
+                <select id="rightStreamSelect">
+                    <option value="">Select Right Stream</option>
+                </select>
+                <button class="btn btn-primary" id="compareBtn" style="width: 100%;">🔗 Compare</button>
+                
+                <div id="comparisonResult"></div>
+                
+                <div id="visualizer">
+                    <div class="controls">
+                        <button id="playBtn" class="btn btn-secondary">▶</button>
+                        <button id="stopBtn" class="btn btn-secondary">⏸</button>
+                        <button id="resetBtn" class="btn btn-secondary">↺</button>
+                        <select id="speedSelect">
+                            <option value="100">Fast</option>
+                            <option value="500" selected>Normal</option>
+                            <option value="1000">Slow</option>
+                        </select>
+                    </div>
+                    <input type="range" id="stepSlider" class="slider" min="0" max="0" value="0">
+                    <div id="streamPrefix" class="stream-prefix"></div>
+                </div>
+
+                <div class="export-options">
+                    <button class="btn btn-secondary" id="exportJsonBtn">📄 JSON</button>
+                    <button class="btn btn-secondary" id="exportAgdaBtn">📐 Agda</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🌳 Method Tree</span>
+                <button class="btn btn-secondary" id="inferRelationsBtn">✨ Infer</button>
+            </div>
+            <div class="panel-content">
+                <div id="methodTree" class="method-tree"></div>
+                <details style="margin-top: 0.75rem;">
+                    <summary style="cursor: pointer; font-size: 0.8rem;">Inferred Relations</summary>
+                    <div id="relationsList" style="margin-top: 0.5rem; font-size: 0.7rem;"></div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Core Runtime
+        // ============================================
+        class ResStream {
+            constructor(seed, stepFn) {
+                this.seed = seed;
+                this.stepFn = stepFn;
+                this.cache = new Map();
+            }
+            
+            step(s) {
+                if (!this.cache.has(s)) {
+                    this.cache.set(s, this.stepFn(s));
+                }
+                return this.cache.get(s);
+            }
+            
+            take(n) {
+                const result = [];
+                let seed = this.seed;
+                for (let i = 0; i < n; i++) {
+                    const [val, next] = this.step(seed);
+                    result.push(val);
+                    seed = next;
+                }
+                return result;
+            }
+        }
+        
+        class BisimulationProver {
+            prove(stream1, stream2, maxSteps = 100) {
+                const visited = new Set();
+                const queue = [[stream1.seed, stream2.seed]];
+                const path = [];
+                
+                while (queue.length && path.length < maxSteps) {
+                    const [s1, s2] = queue.shift();
+                    const key = `${JSON.stringify(s1)}|${JSON.stringify(s2)}`;
+                    
+                    if (visited.has(key)) continue;
+                    visited.add(key);
+                    
+                    const [v1, n1] = stream1.step(s1);
+                    const [v2, n2] = stream2.step(s2);
+                    
+                    path.push({ step: path.length, v1, v2 });
+                    
+                    if (v1 !== v2) {
+                        return { bisimilar: false, counterexample: path[path.length - 1], stepsChecked: visited.size };
+                    }
+                    queue.push([n1, n2]);
+                }
+                return { bisimilar: true, stepsChecked: visited.size };
+            }
+        }
+        
+        // Runtime state
+        const streams = new Map();
+        let currentComparison = null;
+        let animationInterval = null;
+        let currentStep = 0;
+        let snapshots = [];
+        
+        // ============================================
+        // FIXED: Proper stream parsing
+        // ============================================
+        function parseStreamsFromCode(code) {
+            const result = {};
+            // Remove comments
+            const cleanCode = code.replace(/\/\/.*$/gm, '');
+            // Find object definitions: const name = { seed: ..., step: ... }
+            const objRegex = /const\s+(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
+            
+            let match;
+            while ((match = objRegex.exec(cleanCode)) !== null) {
+                const name = match[1];
+                const seedStr = match[2].trim();
+                const params = match[3].trim();
+                const valExpr = match[4].trim();
+                const nextExpr = match[5].trim();
+                
+                let seed;
+                try {
+                    seed = Function(`"use strict"; return (${seedStr})`)();
+                } catch(e) { continue; }
+                
+                const stepFn = new Function(params, `return [${valExpr}, ${nextExpr}];`);
+                result[name] = { seed, step: stepFn };
+            }
+            
+            // Also handle inline objects (no const)
+            const inlineRegex = /(\w+)\s*:\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
+            while ((match = inlineRegex.exec(cleanCode)) !== null) {
+                const name = match[1];
+                const seedStr = match[2].trim();
+                const params = match[3].trim();
+                const valExpr = match[4].trim();
+                const nextExpr = match[5].trim();
+                
+                if (result[name]) continue;
+                let seed;
+                try {
+                    seed = Function(`"use strict"; return (${seedStr})`)();
+                } catch(e) { continue; }
+                const stepFn = new Function(params, `return [${valExpr}, ${nextExpr}];`);
+                result[name] = { seed, step: stepFn };
+            }
+            
+            return result;
+        }
+        
+        // Load example
+        document.getElementById('loadExampleBtn').onclick = () => {
+            const exampleText = `// Fibonacci stream
+const fibonacci = {
+    seed: [0, 1],
+    step: ([a, b]) => [a, [b, a + b]]
+};
+
+// All zeros
+const zeros = {
+    seed: 0,
+    step: (s) => [0, s]
+};
+
+// Natural numbers
+const naturals = {
+    seed: 0,
+    step: (n) => [n, n + 1]
+};
+
+// Even numbers
+const evens = {
+    seed: 0,
+    step: (n) => [n * 2, n + 1]
+};`;
+            document.getElementById('streamEditor').value = exampleText;
+        };
+        
+        // Run streams from editor
+        document.getElementById('runStreamsBtn').onclick = () => {
+            try {
+                const code = document.getElementById('streamEditor').value;
+                const defs = parseStreamsFromCode(code);
+                
+                streams.clear();
+                for (const [name, def] of Object.entries(defs)) {
+                    if (def.seed !== undefined && def.step) {
+                        streams.set(name, new ResStream(def.seed, def.step));
+                    }
+                }
+                
+                if (streams.size === 0) {
+                    alert('No valid streams found. Use format:\nconst name = { seed: value, step: (param) => [value, next] }');
+                }
+                
+                updateStreamList();
+                updateSelectors();
+            } catch(e) {
+                console.error(e);
+                alert('Error parsing: ' + e.message);
+            }
+        };
+        
+        document.getElementById('clearStreamsBtn').onclick = () => {
+            streams.clear();
+            updateStreamList();
+            updateSelectors();
+            document.getElementById('comparisonResult').innerHTML = '';
+            document.getElementById('streamPrefix').innerHTML = '';
+            snapshots = [];
+        };
+        
+        function updateStreamList() {
+            const container = document.getElementById('streamList');
+            if (streams.size === 0) {
+                container.innerHTML = '<div class="stream-card" style="color: var(--text-secondary); text-align: center;">No streams loaded.</div>';
+                return;
+            }
+            
+            container.innerHTML = Array.from(streams.keys()).map(name => `
+                <div class="stream-card">
+                    <div class="step-badge">📊 ${name}</div>
+                    <div class="value-display">
+                        Prefix: <code>[${streams.get(name).take(5).join(', ')}...]</code>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateSelectors() {
+            const leftSelect = document.getElementById('leftStreamSelect');
+            const rightSelect = document.getElementById('rightStreamSelect');
+            const options = Array.from(streams.keys()).map(name => `<option value="${name}">${name}</option>`).join('');
+            
+            leftSelect.innerHTML = '<option value="">Left Stream</option>' + options;
+            rightSelect.innerHTML = '<option value="">Right Stream</option>' + options;
+        }
+        
+        // Comparison logic
+        document.getElementById('compareBtn').onclick = () => {
+            const leftName = document.getElementById('leftStreamSelect').value;
+            const rightName = document.getElementById('rightStreamSelect').value;
+            
+            if (!leftName || !rightName) {
+                alert('Please select both streams');
+                return;
+            }
+            
+            const left = streams.get(leftName);
+            const right = streams.get(rightName);
+            
+            const prover = new BisimulationProver();
+            const result = prover.prove(left, right, 100);
+            currentComparison = { left, right, result, leftName, rightName };
+            
+            const resultDiv = document.getElementById('comparisonResult');
+            if (result.bisimilar) {
+                resultDiv.innerHTML = `
+                    <div class="comparison-result success">
+                        ✓ BISIMILAR · Checked ${result.stepsChecked} steps
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="comparison-result failure">
+                        ✗ DIVERGENT at step ${result.counterexample.step}<br>
+                        <small>${leftName}: ${JSON.stringify(result.counterexample.v1)} ≠ ${rightName}: ${JSON.stringify(result.counterexample.v2)}</small>
+                    </div>
+                `;
+            }
+            
+            generateSnapshots(left, right, 50);
+        };
+        
+        function generateSnapshots(left, right, maxSteps) {
+            snapshots = [];
+            let s1 = left.seed;
+            let s2 = right.seed;
+            
+            for (let i = 0; i < maxSteps; i++) {
+                const [v1, n1] = left.step(s1);
+                const [v2, n2] = right.step(s2);
+                snapshots.push({ step: i, v1, v2, match: v1 === v2 });
+                s1 = n1;
+                s2 = n2;
+            }
+            
+            const slider = document.getElementById('stepSlider');
+            slider.max = snapshots.length - 1;
+            currentStep = 0;
+            updateVisualizer();
+        }
+        
+        function updateVisualizer() {
+            const container = document.getElementById('streamPrefix');
+            const snapshot = snapshots[currentStep];
+            if (!snapshot) return;
+            
+            const html = snapshots.slice(0, currentStep + 1).map((s, idx) => `
+                <div class="stream-card ${idx === currentStep ? 'latest' : ''} ${!s.match ? 'divergent' : ''}" style="min-width: 100px;">
+                    <div class="step-badge">#${s.step}</div>
+                    <div class="value-display">
+                        <div>L: <code>${JSON.stringify(s.v1)}</code></div>
+                        <div>R: <code>${JSON.stringify(s.v2)}</code></div>
+                        ${!s.match ? '<span style="color: var(--accent-error);">✗</span>' : '✓'}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+            document.getElementById('stepSlider').value = currentStep;
+        }
+        
+        // Animation
+        document.getElementById('playBtn').onclick = () => {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = parseInt(document.getElementById('speedSelect').value);
+            animationInterval = setInterval(() => {
+                if (currentStep < snapshots.length - 1) {
+                    currentStep++;
+                    updateVisualizer();
+                } else {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+            }, speed);
+        };
+        
+        document.getElementById('stopBtn').onclick = () => {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        };
+        
+        document.getElementById('resetBtn').onclick = () => {
+            currentStep = 0;
+            updateVisualizer();
+        };
+        
+        document.getElementById('stepSlider').oninput = (e) => {
+            currentStep = parseInt(e.target.value);
+            updateVisualizer();
+        };
+        
+        // Export
+        document.getElementById('exportJsonBtn').onclick = () => {
+            if (!currentComparison) {
+                alert('Run a comparison first');
+                return;
+            }
+            const cert = {
+                type: 'bisimulation_certificate',
+                streams: { left: currentComparison.leftName, right: currentComparison.rightName },
+                result: currentComparison.result,
+                timestamp: new Date().toISOString(),
+                snapshots: snapshots
+            };
+            const blob = new Blob([JSON.stringify(cert, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bisim_${currentComparison.leftName}_${currentComparison.rightName}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        
+        document.getElementById('exportAgdaBtn').onclick = () => {
+            if (!currentComparison) {
+                alert('Run a comparison first');
+                return;
+            }
+            const agdaCode = `module Bisim_${currentComparison.leftName}_${currentComparison.rightName} where
+
+open import Coinduction
+open import Data.Nat
+
+-- Status: ${currentComparison.result.bisimilar ? 'BISIMILAR ✓' : 'NOT BISIMILAR ✗'}
+-- Checked ${currentComparison.result.stepsChecked} steps
+
+postulate
+  left right : Stream ℕ
+  bisim : left ≈ right
+`;
+            const blob = new Blob([agdaCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bisim_${currentComparison.leftName}_${currentComparison.rightName}.agda`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        
+        // Inference
+        document.getElementById('inferRelationsBtn').onclick = () => {
+            const leftName = document.getElementById('leftStreamSelect').value;
+            const rightName = document.getElementById('rightStreamSelect').value;
+            
+            if (!leftName || !rightName) {
+                alert('Select both streams first');
+                return;
+            }
+            
+            const left = streams.get(leftName);
+            const right = streams.get(rightName);
+            const relations = [];
+            const visited = new Set();
+            const queue = [[left.seed, right.seed]];
+            
+            while (queue.length && relations.length < 20) {
+                const [s1, s2] = queue.shift();
+                const key = `${JSON.stringify(s1)}|${JSON.stringify(s2)}`;
+                if (visited.has(key)) continue;
+                visited.add(key);
+                
+                const [v1, n1] = left.step(s1);
+                const [v2, n2] = right.step(s2);
+                
+                relations.push({
+                    leftSeed: JSON.stringify(s1).slice(0, 40),
+                    rightSeed: JSON.stringify(s2).slice(0, 40),
+                    leftValue: v1,
+                    rightValue: v2,
+                    match: v1 === v2
+                });
+                
+                queue.push([n1, n2]);
+            }
+            
+            const container = document.getElementById('relationsList');
+            container.innerHTML = relations.map(r => `
+                <div style="padding: 0.3rem; border-bottom: 1px solid var(--border);">
+                    <span style="color: ${r.match ? 'var(--accent-success)' : 'var(--accent-error)'}">${r.match ? '✓' : '✗'}</span>
+                    ${r.leftSeed}… → ${r.leftValue} | ${r.rightSeed}… → ${r.rightValue}
+                </div>
+            `).join('');
+        };
+        
+        // Method Tree
+        function populateMethodTree() {
+            const treeHtml = `
+                <div class="tree-root">📐 Resolutive Coinduction</div>
+                <div class="tree-node"><span class="tree-label">Layer 1: Foundation</span>
+                    <div class="tree-node">νX.F(X) — Greatest Fixed Point</div>
+                    <div class="tree-node">μX.F(X) — Least Fixed Point</div>
+                </div>
+                <div class="tree-node"><span class="tree-label">Layer 2: Core Rules</span>
+                    <div class="tree-node">νR-strong — Corecursion with seed</div>
+                    <div class="tree-node">Guardedness under constructors</div>
+                </div>
+                <div class="tree-node"><span class="tree-label">Layer 3: Computation</span>
+                    <div class="tree-node">Curry–Howard: corecursion as program</div>
+                    <div class="tree-node">Monad: S → A × T(S) × S</div>
+                </div>
+                <div class="tree-node"><span class="tree-label">Layer 4: Proof Methods</span>
+                    <div class="tree-node">Bisimulation congruence</div>
+                    <div class="tree-node">Coinduction principle</div>
+                </div>
+                <div class="tree-node"><span class="tree-label">Layer 5: Toolchain ✓</span>
+                    <div class="tree-node">Guardedness checker · Bisim prover</div>
+                    <div class="tree-node">Visualizer · Certificate export</div>
+                </div>
+                <div class="tree-node"><span class="tree-label">Next Steps</span>
+                    <div class="tree-node">🔜 Coq/Agda backend · WASM · ML inference</div>
+                </div>
+            `;
+            document.getElementById('methodTree').innerHTML = treeHtml;
+        }
+        
+        populateMethodTree();
+        
+        // Auto-load example on startup
+        setTimeout(() => {
+            document.getElementById('loadExampleBtn').click();
+            setTimeout(() => document.getElementById('runStreamsBtn').click(), 50);
+        }, 100);
+    </script>
+</body>
+</html>
