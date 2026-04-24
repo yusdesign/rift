@@ -1,3 +1,4 @@
 .bak
 *.bak
 docs/*.bak
+docs/oeis/tmp/*
