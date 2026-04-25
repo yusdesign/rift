@@ -41,8 +41,8 @@ const stream = {
 
 Different guardedness parameters produce different productivity inferences for the same stream definition:
 
-| Stream | Strict | Moderate | Lax | Minimal |  
-| ------------ | ------- | ------- | ------- |  
+| Stream     | Strict    | Moderate  | Lax       | Minimal |  
+| ---------- | --------- | --------- | --------- | ------- |    
 | powersOf2 | ✗ (50) | ✓ (80) | ✓ (75) | ✓ (60) |  
 | squareWave | ✗ (50) | ✓ (80) | ✓ (75) | ✓ (60) |  
 
