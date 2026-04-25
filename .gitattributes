@@ -1,3 +1,2 @@
 docs/oeis/*.json filter=lfs diff=lfs merge=lfs -text
-docs/oeis/chunks/*.json filter=lfs diff=lfs merge=lfs -text
 docs/oeis/oeis_chunks/*.json filter=lfs diff=lfs merge=lfs -text
