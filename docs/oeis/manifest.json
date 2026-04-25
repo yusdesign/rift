@@ -1,0 +1,8 @@
+{
+  "version": "2.0",
+  "generated": "2026-04-25T04:09:16.104Z",
+  "totalSequences": 394981,
+  "chunkSize": 5000,
+  "chunks": 79,
+  "maxTerms": 100
+}

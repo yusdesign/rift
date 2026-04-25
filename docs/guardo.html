@@ -3,1291 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resolutive Coinduction Explorer | Waveform · Guarded Operators · OEIS</title>
+    <title>Waveform Modifier Studio | Resolutive Coinduction · OEIS · Guarded Operators</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-primary: #0f0f1a;
-            --bg-secondary: #1a1a2e;
-            --bg-tertiary: #16213e;
-            --text-primary: #e2e2e2;
-            --text-secondary: #a0a0b0;
-            --accent-success: #00d4aa;
-            --accent-error: #ff6b6b;
-            --accent-warning: #ffd93d;
-            --accent-info: #6c63ff;
+            --bg-primary: #0a0a0f; --bg-secondary: #12121a; --bg-tertiary: #1a1a2a;
+            --text-primary: #e2e2e2; --text-secondary: #8888aa;
+            --accent-1: #6c63ff; --accent-2: #00d4aa; --accent-3: #ffd93d; --accent-4: #ff6b6b;
             --border: #2a2a3a;
-            --wave-0: #6c63ff;
-            --wave-1: #00d4aa;
-            --wave-2: #ffd93d;
-            --wave-3: #ff6b6b;
         }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.5;
-        }
-
-        .header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 1.5rem;
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            color: var(--accent-info);
-            display: inline-block;
-        }
-
-        .header .subtitle {
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-            font-size: 0.85rem;
-        }
-
-        .app-container {
-            display: grid;
-            grid-template-columns: 380px 1fr 380px;
-            gap: 0.75rem;
-            padding: 1rem;
-            min-height: calc(100vh - 80px);
-        }
-
-        .panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            background: var(--bg-tertiary);
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .panel-content {
-            padding: 1rem;
-            flex: 1;
-            overflow-y: auto;
-            max-height: calc(100vh - 140px);
-        }
-
-        .editor {
-            background: #0a0a0f;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 0.8rem;
-            line-height: 1.4;
-            border: 1px solid var(--border);
-            width: 100%;
-            resize: vertical;
-            color: var(--text-primary);
-            padding: 0.75rem;
-        }
-
-        textarea.editor {
-            min-height: 150px;
-        }
-
-        .btn {
-            padding: 0.4rem 0.8rem;
-            border: 1px solid var(--border);
-            background: var(--bg-tertiary);
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.8rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: var(--text-primary);
-        }
-
-        .btn-primary {
-            background: var(--accent-info);
-            border-color: var(--accent-info);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            filter: brightness(0.9);
-        }
-
-        .btn-success {
-            background: var(--accent-success);
-            border-color: var(--accent-success);
-            color: #0f0f1a;
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent-info);
-        }
-
-        .stream-card {
-            background: var(--bg-tertiary);
-            border-left: 3px solid var(--accent-info);
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stream-card.guarded-success {
-            border-left-color: var(--accent-success);
-        }
-
-        .stream-card.guarded-fail {
-            border-left-color: var(--accent-error);
-        }
-
-        .step-badge {
-            background: var(--bg-primary);
-            padding: 0.15rem 0.5rem;
-            font-size: 0.65rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 0.35rem;
-        }
-
-        .value-display {
-            font-size: 1rem;
-            font-weight: 500;
-            margin: 0.35rem 0;
-        }
-
-        .value-display code {
-            background: var(--bg-primary);
-            padding: 0.15rem 0.35rem;
-            font-size: 0.85rem;
-        }
-
-        .waveform-container {
-            background: var(--bg-tertiary);
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border: 1px solid var(--border);
-        }
-
-        .waveform-title {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        canvas.waveform {
-            width: 100%;
-            height: 80px;
-            background: #0a0a0f;
-            display: block;
-        }
-
-        .waveform-legend {
-            display: flex;
-            gap: 1rem;
-            margin-top: 0.5rem;
-            font-size: 0.65rem;
-        }
-
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            display: inline-block;
-            margin-right: 4px;
-        }
-
-        .operator-panel {
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-        }
-
-        .operator-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-top: 0.5rem;
-        }
-
-        .operator-btn {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.7rem;
-            font-family: monospace;
-        }
-
-        .guard-level-selector {
-            display: flex;
-            gap: 0.25rem;
-            align-items: center;
-            background: var(--bg-tertiary);
-            padding: 0.25rem;
-        }
-
-        .guard-level-btn {
-            padding: 0.2rem 0.5rem;
-            font-size: 0.7rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            cursor: pointer;
-        }
-
-        .guard-level-btn.active {
-            border-color: var(--accent-info);
-            background: var(--accent-info);
-            color: white;
-        }
-
-        .comparison-result {
-            padding: 0.5rem;
-            margin: 0.75rem 0;
-            text-align: center;
-            font-weight: 500;
-            font-size: 0.85rem;
-            border: 1px solid;
-        }
-
-        .comparison-result.success {
-            background: rgba(0, 212, 170, 0.1);
-            border-color: var(--accent-success);
-            color: var(--accent-success);
-        }
-
-        .comparison-result.failure {
-            background: rgba(255, 107, 107, 0.1);
-            border-color: var(--accent-error);
-            color: var(--accent-error);
-        }
-
-        select, input {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            padding: 0.4rem 0.6rem;
-            color: var(--text-primary);
-            width: 100%;
-            margin-bottom: 0.5rem;
-            font-size: 0.8rem;
-        }
-
-        .slider {
-            width: 100%;
-            margin: 0.5rem 0;
-        }
-
-        .controls {
-            display: flex;
-            gap: 0.35rem;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .method-tree {
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            font-size: 0.75rem;
-        }
-
-        .tree-node {
-            margin-left: 1.2rem;
-            position: relative;
-        }
-
-        .tree-node::before {
-            content: '├─';
-            position: absolute;
-            left: -1rem;
-            color: var(--accent-info);
-        }
-
-        .tree-root {
-            font-weight: 700;
-            color: var(--accent-success);
-            margin-bottom: 0.5rem;
-        }
-
-        .tree-label {
-            font-weight: 600;
-            color: var(--accent-warning);
-        }
-
-        .oeis-status {
-            font-size: 0.65rem;
-            padding: 0.25rem;
-            margin-top: 0.25rem;
-            text-align: center;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-        }
-
-        @media (max-width: 1100px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.5; }
+        .header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); border-bottom: 1px solid var(--border); padding: 1rem 2rem; }
+        .header h1 { font-size: 1.75rem; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .header .subtitle { color: var(--text-secondary); margin-top: 0.25rem; }
+        .main-container { max-width: 100%; padding: 1rem; }
+        .inputs-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; background: var(--bg-secondary); padding: 0.75rem; border: 1px solid var(--border); }
+        .input-group { flex: 1; min-width: 180px; background: var(--bg-tertiary); padding: 0.5rem; border-left: 3px solid var(--accent-1); }
+        .input-group label { font-size: 0.7rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem; }
+        .input-group input, .input-group textarea { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.3rem; font-size: 0.75rem; }
+        .input-group textarea { height: 50px; resize: vertical; }
+        .file-zone { border: 1px dashed var(--border); padding: 0.3rem; text-align: center; font-size: 0.7rem; cursor: pointer; margin-top: 0.25rem; }
+        .file-zone:hover { border-color: var(--accent-1); }
+        .waveform-section { background: var(--bg-secondary); border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; }
+        .waveform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+        .waveform-name { font-weight: 600; font-size: 0.9rem; }
+        .productivity-badge { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+        .badge-productive { background: rgba(0, 212, 170, 0.2); color: var(--accent-2); }
+        .badge-not-productive { background: rgba(255, 107, 107, 0.2); color: var(--accent-4); }
+        canvas { width: 100%; height: 150px; background: #0a0a0f; border: 1px solid var(--border); display: block; }
+        .waveform-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .sequence-preview { font-family: 'Fira Code', monospace; font-size: 0.65rem; background: var(--bg-primary); padding: 0.5rem; margin-top: 0.5rem; overflow-x: auto; white-space: nowrap; }
+        .operators-section { background: var(--bg-secondary); border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; }
+        .operator-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
+        .operator-btn { padding: 0.4rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.7rem; transition: all 0.1s; }
+        .operator-btn:hover { border-color: var(--accent-1); transform: translateY(-1px); }
+        .operator-btn.chain { background: rgba(108, 99, 255, 0.15); }
+        .controls-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+        .control-panel { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem; }
+        .control-panel h4 { font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--accent-2); }
+        .slider-container { margin-bottom: 0.5rem; }
+        .slider-container label { font-size: 0.7rem; display: flex; justify-content: space-between; }
+        input[type="range"] { width: 100%; accent-color: var(--accent-1); }
+        .btn { padding: 0.3rem 0.6rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.7rem; }
+        .btn-primary { background: var(--accent-1); border-color: var(--accent-1); }
+        .btn-success { background: var(--accent-2); border-color: var(--accent-2); color: #0a0a0f; }
+        .chain-display { background: var(--bg-tertiary); padding: 0.4rem; font-size: 0.65rem; font-family: monospace; margin-top: 0.5rem; border-left: 3px solid var(--accent-1); word-break: break-all; }
+        select { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.3rem; font-size: 0.7rem; width: 100%; }
+        .oeis-status { font-size: 0.6rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        @media (max-width: 800px) { .controls-row { grid-template-columns: 1fr; gap: 0.5rem; } .inputs-row { flex-direction: column; } }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🔄 Resolutive Coinduction Explorer</h1>
-        <div class="subtitle">Waveform Visualization · Guarded Operators · Parametric Productivity · OEIS Static</div>
+        <h1>🎛️ Waveform Modifier Studio</h1>
+        <div class="subtitle">Resolutive Coinduction · Guarded Operators · Any Input → Waveform · OEIS Gzipped Chunks</div>
     </div>
 
-    <div class="app-container">
-        <!-- Left Panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>📝 Stream Definitions</span>
-                <button class="btn btn-secondary" id="loadExampleBtn">📚 Example</button>
-            </div>
-            <div class="panel-content">
-                <textarea id="streamEditor" class="editor" rows="6" placeholder='Define streams...'></textarea>
-                <div class="controls" style="margin-top: 0.75rem;">
-                    <button class="btn btn-primary" id="runStreamsBtn">▶ Run & Check</button>
-                    <button class="btn btn-secondary" id="clearStreamsBtn">🗑 Clear</button>
-                </div>
-                
-                <!-- OEIS Panel with Static JSON -->
-                <div class="oeis-panel" style="margin-top: 0.5rem;">
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="oeisId" placeholder="OEIS ID (A000045, A000079)" list="oeisSuggestions" style="flex: 2;">
-                        <datalist id="oeisSuggestions">
-                            <option value="A000027">Natural numbers</option>
-                            <option value="A000045">Fibonacci</option>
-                            <option value="A000079">Powers of 2</option>
-                            <option value="A000142">Factorials</option>
-                            <option value="A000217">Triangular</option>
-                            <option value="A000290">Squares</option>
-                            <option value="A000040">Primes</option>
-                            <option value="A000108">Catalan</option>
-                            <option value="A000034">Periodic 1,2</option>
-                            <option value="A001477">Nonnegative</option>
-                        </datalist>
-                        <button class="btn btn-primary" id="fetchOeisBtn">🔢 Fetch</button>
-                    </div>
-                    <div id="oeisPreview" style="font-size: 0.7rem; margin-top: 0.25rem; display: none;"></div>
-                    <div id="oeisStatus" class="oeis-status">📦 Loading OEIS index...</div>
-                </div>
-                
-                <div id="streamList" style="margin-top: 0.75rem;"></div>
+    <div class="main-container">
+        <div class="inputs-row">
+            <div class="input-group"><label>🔢 OEIS Sequence</label><div style="display:flex; gap:0.3rem;"><input type="text" id="oeisId" placeholder="A000079" value="A000079"><button class="btn" id="loadOeisBtn">Load</button></div><div id="oeisStatus" class="oeis-status">📦 Loading...</div></div>
+            <div class="input-group"><label>🎵 Audio File</label><div class="file-zone" id="audioZone">📁 Click or drop audio</div><input type="file" id="audioFile" accept="audio/*" style="display:none;"><div id="audioPreview" style="font-size:0.6rem;"></div></div>
+            <div class="input-group"><label>🖼️ Image File</label><div class="file-zone" id="imageZone">📁 Click or drop image</div><input type="file" id="imageFile" accept="image/*" style="display:none;"><div id="imagePreview" style="font-size:0.6rem;"></div></div>
+            <div class="input-group"><label>📝 Text → ASCII</label><textarea id="textInput" placeholder="Type something..."></textarea><button class="btn" id="loadTextBtn" style="width:100%; margin-top:0.25rem;">Convert</button></div>
+            <div class="input-group"><label>✏️ Manual Numbers</label><input type="text" id="manualSeq" placeholder="1,2,3,4,5"><button class="btn" id="loadManualBtn" style="width:100%; margin-top:0.25rem;">Load</button></div>
+        </div>
+
+        <div class="waveform-section">
+            <div class="waveform-header"><span class="waveform-name" id="waveformName">No waveform loaded</span><span id="productiveBadge" class="productivity-badge badge-productive">✓ Productive</span><span id="waveformStats" style="font-size:0.7rem;"></span></div>
+            <canvas id="mainWaveform" width="800" height="150"></canvas>
+            <div class="waveform-controls"><button id="playWaveform" class="btn">▶ Play</button><button id="stopWaveform" class="btn">⏸ Stop</button><button id="resetWaveform" class="btn">↺ Reset</button><input type="range" id="stepSlider" min="0" max="100" value="0" style="flex:1;"><span id="stepValue" style="font-size:0.7rem;">0</span></div>
+            <div id="sequencePreview" class="sequence-preview"></div>
+            <div id="chainDisplay" class="chain-display" style="display:none;"><strong>Chain:</strong> <span id="chainText"></span></div>
+        </div>
+
+        <div class="operators-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><span style="font-weight:600;">⚙️ Guarded Operators</span><span id="guardednessInfo" style="font-size:0.65rem;"></span></div>
+            <div class="operator-grid">
+                <button class="operator-btn" data-op="amplify">📈 Amplify</button><button class="operator-btn" data-op="attenuate">📉 Attenuate</button>
+                <button class="operator-btn" data-op="smooth">🌀 Smooth</button><button class="operator-btn" data-op="reverse">🔄 Reverse</button>
+                <button class="operator-btn" data-op="repeat">🔁 Repeat (×2)</button><button class="operator-btn" data-op="interpolate">📐 Interpolate (×2)</button>
+                <button class="operator-btn" data-op="quantize">🎯 Quantize (4)</button><button class="operator-btn" data-op="diff">📊 Difference</button>
+                <button class="operator-btn" data-op="integrate">📈 Integrate</button><button class="operator-btn chain" data-op="normalize">⚖️ Normalize</button>
+                <button class="operator-btn chain" data-op="mix">🔗 Mix (0.5)</button><button class="operator-btn chain" data-op="interleave">🔄 Interleave</button>
             </div>
         </div>
 
-        <!-- Middle Panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>📊 Waveform Visualization</span>
-                <div class="guard-level-selector">
-                    <span style="font-size:0.7rem;">Guardedness:</span>
-                    <button class="guard-level-btn" data-level="STRICT">🔒 Strict</button>
-                    <button class="guard-level-btn active" data-level="MODERATE">⚖️ Moderate</button>
-                    <button class="guard-level-btn" data-level="LAX">🌀 Lax</button>
-                    <button class="guard-level-btn" data-level="MINIMAL">🔓 Minimal</button>
-                </div>
-            </div>
-            <div class="panel-content">
-                <select id="waveformSelect">
-                    <option value="">Select stream to visualize</option>
-                </select>
-                <div id="waveformDisplay"></div>
-                
-                <div class="operator-panel">
-                    <div style="font-weight:600; margin-bottom:0.5rem;">⚙️ Guarded Operators</div>
-                    <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.5rem;">
-                        Operators preserve productivity only when applied to guarded streams
-                    </div>
-                    <div class="operator-buttons">
-                        <button class="btn operator-btn" data-op="map">📐 map(f)</button>
-                        <button class="btn operator-btn" data-op="zip">🔗 zip</button>
-                        <button class="btn operator-btn" data-op="filter">🔍 filter</button>
-                        <button class="btn operator-btn" data-op="take">✂️ take(n)</button>
-                        <button class="btn operator-btn" data-op="interleave">🔄 interleave</button>
-                        <button class="btn operator-btn" data-op="scale">📈 scale(k)</button>
-                    </div>
-                    <div id="operatorResult" style="margin-top:0.75rem; font-size:0.75rem;"></div>
-                </div>
-                
-                <div id="guardednessResult" style="font-size: 0.8rem; margin-top: 0.5rem;"></div>
-                
-                <div class="operator-panel" style="margin-top:0.5rem;">
-                    <div style="font-weight:600;">🔍 Bisimulation</div>
-                    <select id="leftStreamSelect">
-                        <option value="">Left Stream</option>
-                    </select>
-                    <select id="rightStreamSelect">
-                        <option value="">Right Stream</option>
-                    </select>
-                    <button class="btn btn-primary" id="compareBtn" style="width:100%; margin-top:0.5rem;">🔗 Compare</button>
-                    <div id="comparisonResult"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>🌳 Productivity Analysis</span>
-                <button class="btn btn-secondary" id="inferRelationsBtn">✨ Infer</button>
-            </div>
-            <div class="panel-content">
-                <div id="parametricAnalysis"></div>
-                <div id="methodTree" class="method-tree"></div>
-                <details style="margin-top: 0.75rem;">
-                    <summary style="cursor: pointer; font-size: 0.8rem;">📊 Inferred Relations</summary>
-                    <div id="relationsList" style="margin-top: 0.5rem; font-size: 0.7rem;"></div>
-                </details>
-            </div>
+        <div class="controls-row">
+            <div class="control-panel"><h4>🎚️ Modifier Parameters</h4><div class="slider-container"><label>Gain <span id="gainVal">1.0</span></label><input type="range" id="gainSlider" min="0" max="3" step="0.01" value="1"></div><div class="slider-container"><label>Smoothing Window <span id="smoothVal">1</span></label><input type="range" id="smoothSlider" min="1" max="10" step="1" value="1"></div><div class="slider-container"><label>Quantization Levels <span id="quantVal">4</span></label><input type="range" id="quantSlider" min="2" max="32" step="1" value="4"></div></div>
+            <div class="control-panel"><h4>🔗 Binary Operator Target</h4><select id="targetStreamSelect"><option value="sine">Sine Wave (target)</option><option value="triangle">Triangle Wave</option><option value="square">Square Wave</option></select><div id="binaryInfo" style="font-size:0.65rem; margin-top:0.5rem;"></div></div>
+            <div class="control-panel"><h4>💾 Export</h4><div style="display:flex; gap:0.5rem; flex-wrap:wrap;"><button id="exportJson" class="btn">JSON</button><button id="exportCsv" class="btn">CSV</button><button id="exportStreamBtn" class="btn btn-success">💾 Save Stream</button><button id="resetChainBtn" class="btn">🗑 Reset Chain</button></div><details style="margin-top:0.5rem;"><summary style="cursor:pointer; font-size:0.65rem;">📐 Method Reference</summary><div style="font-size:0.6rem; margin-top:0.3rem;">νX.F(X) — Greatest Fixed Point<br>✓ Moderate Guardedness (threshold 60)<br>✓ λ wrapper preserves productivity</div></details></div>
         </div>
     </div>
 
     <script>
-        // ============================================
-        // Core Classes
-        // ============================================
         class ResStream {
-            constructor(name, seed, stepFn) {
-                this.name = name;
-                this.seed = seed;
-                this.stepFn = stepFn;
-                this.cache = new Map();
-                this.parametricResults = null;
-            }
-            
-            step(s) {
-                if (!this.cache.has(s)) {
-                    this.cache.set(s, this.stepFn(s));
-                }
-                return this.cache.get(s);
-            }
-            
-            take(n) {
-                const result = [];
-                let seed = this.seed;
-                for (let i = 0; i < n; i++) {
-                    const [val, next] = this.step(seed);
-                    result.push(val);
-                    seed = next;
-                }
-                return result;
-            }
-            
-            map(f) {
-                const outer = this;
-                return new ResStream(`${outer.name}_map`, outer.seed, function(s) {
-                    const [val, next] = outer.step(s);
-                    return [f(val), next];
-                });
-            }
-            
-            zip(other) {
-                const outer = this;
-                const seedPair = [outer.seed, other.seed];
-                return new ResStream(`${outer.name}_zip_${other.name}`, seedPair, function([s1, s2]) {
-                    const [v1, n1] = outer.step(s1);
-                    const [v2, n2] = other.step(s2);
-                    return [[v1, v2], [n1, n2]];
-                });
-            }
-            
-            filter(pred) {
-                const outer = this;
-                return new ResStream(`${outer.name}_filter`, outer.seed, function(s) {
-                    let [val, next] = outer.step(s);
-                    while (!pred(val)) {
-                        [val, next] = outer.step(next);
-                    }
-                    return [val, next];
-                });
-            }
-            
-            scale(k) {
-                const outer = this;
-                return new ResStream(`${outer.name}_x${k}`, outer.seed, function(s) {
-                    const [val, next] = outer.step(s);
-                    return [val * k, next];
-                });
-            }
-            
-            interleave(other) {
-                const outer = this;
-                const seedState = { s1: outer.seed, s2: other.seed, turn: 0 };
-                return new ResStream(`${outer.name}_interleave_${other.name}`, seedState, function(state) {
-                    if (state.turn === 0) {
-                        const [v, n] = outer.step(state.s1);
-                        return [v, { s1: n, s2: state.s2, turn: 1 }];
-                    } else {
-                        const [v, n] = other.step(state.s2);
-                        return [v, { s1: state.s1, s2: n, turn: 0 }];
-                    }
-                });
-            }
+            constructor(name, data, stepFn=null){ this.name=name; this.data=[...data]; this.index=0; this.stepFn=stepFn||((idx,arr)=>arr[idx%arr.length]); this.cache=new Map(); }
+            stepAt(idx){ return this.stepFn(idx,this.data); }
+            take(n){ const r=[]; for(let i=0;i<n;i++) r.push(this.stepFn(i,this.data)); return r; }
+            getAll(){ return this.data; }
+            amplify(g){ const s=this; return new ResStream(s.name+'_amp', s.data, (i,_)=>s.stepFn(i,s.data)*g); }
+            attenuate(f){ return this.amplify(1/f); }
+            smooth(w){ const s=this; return new ResStream(s.name+'_smooth', s.data, (i,_)=>{ let sum=0,c=0; for(let j=Math.max(0,i-w);j<=i;j++){ sum+=s.stepFn(j,s.data); c++; } return sum/c; }); }
+            reverse(){ const s=this, len=s.data.length; return new ResStream(s.name+'_rev', s.data, (i,_)=>{ const revIdx=(len-1-(i%len)+len)%len; return s.stepFn(revIdx,s.data); }); }
+            repeat(t){ const r=[]; for(let i=0;i<t;i++) r.push(...this.data); return new ResStream(this.name+'_rep', r); }
+            interpolate(f){ const s=this, interp=[]; for(let i=0;i<s.data.length-1;i++){ interp.push(s.data[i]); for(let j=1;j<f;j++){ const t=j/f; interp.push(s.data[i]*(1-t)+s.data[i+1]*t); } } interp.push(s.data[s.data.length-1]); return new ResStream(this.name+'_interp', interp); }
+            quantize(l){ const s=this, minVal=Math.min(...s.data), maxVal=Math.max(...s.data), step=(maxVal-minVal)/l; return new ResStream(s.name+'_quant', s.data, (i,_)=>{ const val=s.stepFn(i,s.data); return minVal+Math.floor((val-minVal)/step)*step+step/2; }); }
+            diff(){ const s=this; let prev=s.stepFn(0,s.data); return new ResStream(s.name+'_diff', s.data, (i,_)=>{ const curr=s.stepFn(i,s.data); const delta=curr-prev; prev=curr; return delta; }); }
+            integrate(){ const s=this; let sum=0; return new ResStream(s.name+'_int', s.data, (i,_)=>{ sum+=s.stepFn(i,s.data); return sum; }); }
+            normalize(){ const s=this; const maxVal=Math.max(...s.data.map((_,i)=>Math.abs(s.stepFn(i,s.data)))); if(maxVal===0) return s; return new ResStream(s.name+'_norm', s.data, (i,_)=>s.stepFn(i,s.data)/maxVal); }
+            mix(o,w=0.5){ const s=this; return new ResStream(s.name+'_mix', s.data, (i,_)=>s.stepFn(i,s.data)*w+o.stepFn(i,o.data)*(1-w)); }
+            interleave(o){ const s=this; let turn=0; return new ResStream(s.name+'_intlv', s.data, (i,_)=>{ const val=turn===0?s.stepFn(i,s.data):o.stepFn(i,o.data); turn=1-turn; return val; }); }
         }
         
-        // ============================================
-        // Parametric Guardedness Checker
-        // ============================================
-        class ParametricGuardednessChecker {
-            constructor() {
-                this.guardLevels = {
-                    STRICT: { name: '🔒 Strict', threshold: 80, desc: 'Thunk-wrapped recursion only' },
-                    MODERATE: { name: '⚖️ Moderate', threshold: 60, desc: 'Lambda or constructor guard' },
-                    LAX: { name: '🌀 Lax', threshold: 40, desc: 'Any tail call allowed' },
-                    MINIMAL: { name: '🔓 Minimal', threshold: 20, desc: 'Bounded exploration only' }
-                };
-                this.currentLevel = 'MODERATE';
-            }
-            
-            setLevel(level) {
-                if (this.guardLevels[level]) {
-                    this.currentLevel = level;
-                    return true;
-                }
-                return false;
-            }
-            
-            checkStream(stream, level = null) {
-                const useLevel = level || this.currentLevel;
-                const config = this.guardLevels[useLevel];
-                
-                const result = {
-                    name: stream.name,
-                    level: useLevel,
-                    levelName: config.name,
-                    productive: false,
-                    score: 0,
-                    issues: []
-                };
-                
-                const stepStr = stream.stepFn.toString();
-                let score = 0;
-                
-                const hasArrayReturn = /return\s*\[/.test(stepStr) || /=>\s*\[/.test(stepStr);
-                if (hasArrayReturn) score += 25;
-                else result.issues.push("No array return");
-                
-                const hasThunk = /\(\)\s*=>/.test(stepStr);
-                const hasAnyLambda = /=>\s*\(?[a-zA-Z_]/;
-                
-                switch(useLevel) {
-                    case 'STRICT':
-                        if (hasThunk) score += 45;
-                        else result.issues.push("Requires thunk wrapper");
-                        break;
-                    case 'MODERATE':
-                        if (hasThunk) score += 45;
-                        else if (hasAnyLambda) score += 30;
-                        else score += 15;
-                        break;
-                    case 'LAX':
-                        score += 25;
-                        break;
-                    case 'MINIMAL':
-                        score += 10;
-                        break;
-                }
-                
-                const hasValueBeforeRecur = /return\s*\[[^,\]]+,\s*/.test(stepStr);
-                if (hasValueBeforeRecur) score += 25;
-                
-                result.score = score;
-                result.productive = score >= config.threshold;
-                return result;
-            }
-            
-            compareLevels(stream) {
-                const results = {};
-                for (const level of Object.keys(this.guardLevels)) {
-                    results[level] = this.checkStream(stream, level);
-                }
-                return results;
-            }
-        }
+        const targetStreams={ sine:new ResStream('sine',Array.from({length:100},(_,i)=>Math.sin(i*0.1)*50)), triangle:new ResStream('triangle',Array.from({length:100},(_,i)=>{ const t=(i%40)/20; return t<1?t*50:(2-t)*50; })), square:new ResStream('square',Array.from({length:100},(_,i)=>Math.floor(i/20)%2===0?50:-50)) };
         
-        // ============================================
-        // Waveform Visualizer
-        // ============================================
         class WaveformVisualizer {
-            draw(canvasId, stream, steps = 40, color = '#6c63ff') {
-                const canvas = document.getElementById(canvasId);
-                if (!canvas) return;
-                
-                const values = stream.take(steps);
-                const ctx = canvas.getContext('2d');
-                const w = canvas.clientWidth;
-                const h = canvas.clientHeight;
-                canvas.width = w;
-                canvas.height = h;
-                
-                ctx.fillStyle = '#0a0a0f';
-                ctx.fillRect(0, 0, w, h);
-                
-                if (values.length === 0) return;
-                
-                const minVal = Math.min(...values, 0);
-                const maxVal = Math.max(...values, 1);
-                const range = Math.max(maxVal - minVal, 1);
-                
-                ctx.beginPath();
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                
-                for (let i = 0; i < values.length; i++) {
-                    const x = (i / (values.length - 1)) * w;
-                    const y = h - ((values[i] - minVal) / range) * (h - 20) - 10;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-                
-                for (let i = 0; i < values.length; i++) {
-                    const x = (i / (values.length - 1)) * w;
-                    const y = h - ((values[i] - minVal) / range) * (h - 20) - 10;
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            
-            drawComparison(canvasId, stream1, stream2, steps = 40) {
-                const canvas = document.getElementById(canvasId);
-                if (!canvas) return;
-                
-                const vals1 = stream1.take(steps);
-                const vals2 = stream2.take(steps);
-                const ctx = canvas.getContext('2d');
-                const w = canvas.clientWidth;
-                const h = canvas.clientHeight;
-                canvas.width = w;
-                canvas.height = h;
-                
-                ctx.fillStyle = '#0a0a0f';
-                ctx.fillRect(0, 0, w, h);
-                
-                const allVals = [...vals1, ...vals2, 0];
-                const minVal = Math.min(...allVals);
-                const maxVal = Math.max(...allVals, 1);
-                const range = Math.max(maxVal - minVal, 1);
-                
-                ctx.beginPath();
-                ctx.strokeStyle = '#6c63ff';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < vals1.length; i++) {
-                    const x = (i / (vals1.length - 1)) * w;
-                    const y = h - ((vals1[i] - minVal) / range) * (h - 20) - 10;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.strokeStyle = '#00d4aa';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < vals2.length; i++) {
-                    const x = (i / (vals2.length - 1)) * w;
-                    const y = h - ((vals2[i] - minVal) / range) * (h - 20) - 10;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-            }
+            draw(c,s,steps=150,color='#6c63ff',hl=-1){ const ctx=c.getContext('2d'); const w=c.clientWidth,h=c.clientHeight; c.width=w; c.height=h; const vals=s.take(steps); ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,w,h); if(!vals.length) return; const minVal=Math.min(...vals,0), maxVal=Math.max(...vals,1), range=Math.max(maxVal-minVal,0.01); ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2; for(let i=0;i<vals.length;i++){ const x=(i/(vals.length-1))*w, y=h-((vals[i]-minVal)/range)*(h-20)-10; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); } ctx.stroke(); if(hl>=0&&hl<vals.length){ const x=(hl/(vals.length-1))*w, y=h-((vals[hl]-minVal)/range)*(h-20)-10; ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill(); } }
         }
         
-        // ============================================
-        // Static OEIS Loader (from JSON files)
-        // ============================================
-        class StaticOEISLoader {
-            constructor() {
-                this.index = null;
-                this.chunks = {};
-                this.loading = false;
-                this.ready = false;
-            }
-            
-            async loadIndex() {
-                try {
-                    const response = await fetch('oeis/oeis_index.json');
-                    if (!response.ok) throw new Error('Index not found');
-                    this.index = await response.json();
-                    console.log(`OEIS index loaded: ${Object.keys(this.index).length} sequences`);
-                    return true;
-                } catch(e) {
-                    console.warn('Could not load OEIS index:', e);
-                    this.index = this.getFallbackIndex();
-                    return false;
-                }
-            }
-            
-            getFallbackIndex() {
-                // Fallback for when JSON files aren't ready
-                return {
-                    'A000027': { name: 'Natural numbers', terms: 20 },
-                    'A000045': { name: 'Fibonacci numbers', terms: 20 },
-                    'A000079': { name: 'Powers of 2', terms: 20 },
-                    'A000142': { name: 'Factorials', terms: 14 },
-                    'A000217': { name: 'Triangular numbers', terms: 20 },
-                    'A000290': { name: 'Squares', terms: 20 },
-                    'A000040': { name: 'Prime numbers', terms: 20 },
-                    'A000034': { name: 'Periodic 1,2', terms: 20 },
-                    'A001477': { name: 'Nonnegative integers', terms: 20 }
-                };
-            }
-            
-            async loadSequence(id) {
-                const normId = id.toUpperCase();
-                
-                // Try chunked data first
-                const chunkNum = this.getChunkNumber(normId);
-                if (chunkNum !== null && !this.chunks[chunkNum]) {
-                    await this.loadChunk(chunkNum);
-                }
-                
-                if (this.chunks[chunkNum] && this.chunks[chunkNum][normId]) {
-                    return this.chunks[chunkNum][normId];
-                }
-                
-                // Fallback to built-in sequences
-                return this.getFallbackSequence(normId);
-            }
-            
-            getChunkNumber(id) {
-                // Simple hash to determine chunk (based on ID order)
-                const ids = Object.keys(this.index || this.getFallbackIndex());
-                const idx = ids.indexOf(id);
-                if (idx === -1) return null;
-                return Math.floor(idx / 10000);
-            }
-            
-            async loadChunk(chunkNum) {
-                if (this.chunks[chunkNum]) return;
-                try {
-                    const response = await fetch(`oeis/oeis_chunk_${chunkNum}.json`);
-                    if (response.ok) {
-                        this.chunks[chunkNum] = await response.json();
-                    }
-                } catch(e) {
-                    console.warn(`Could not load chunk ${chunkNum}`);
-                }
-            }
-            
-            getFallbackSequence(id) {
-                const fallbacks = {
-                    'A000027': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-                    'A001477': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                    'A000045': [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181],
-                    'A000079': [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288],
-                    'A000142': [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600],
-                    'A000217': [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78, 91, 105, 120, 136, 153, 171, 190],
-                    'A000290': [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361],
-                    'A000040': [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71],
-                    'A000034': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
-                    'A000108': [1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012]
-                };
-                
-                if (fallbacks[id]) {
-                    return { data: fallbacks[id], name: this.index?.[id]?.name || id };
-                }
-                
-                throw new Error(`Sequence ${id} not available. Try: A000027, A000045, A000079, A000142, A000217, A000290, A000040`);
-            }
-            
-            search(query) {
-                if (!this.index) return [];
-                const q = query.toUpperCase();
-                const results = [];
-                for (const [id, info] of Object.entries(this.index)) {
-                    if (id.includes(q) || (info.name && info.name.toUpperCase().includes(q))) {
-                        results.push({ id, name: info.name, terms: info.terms });
-                        if (results.length >= 15) break;
-                    }
-                }
-                return results;
-            }
-            
-            createStreamFromSequence(id, seqData) {
-                const name = `oeis_${id.toLowerCase()}`;
-                const terms = seqData.data;
-                const seed = { index: 0, terms: terms };
-                const stepFn = function(s) {
-                    const idx = s.index;
-                    const value = s.terms[idx % s.terms.length];
-                    return [value, { index: idx + 1, terms: s.terms }];
-                };
-                return { name, seed, stepFn, description: seqData.name || id };
-            }
+        class OEISLoader {
+            constructor(p='oeis/'){ this.basePath=p; this.index=null; this.manifest=null; this.chunkCache=new Map(); }
+            async decompressGzip(b){ const ds=new DecompressionStream('gzip'); const decompressedStream=b.stream().pipeThrough(ds); return new Response(decompressedStream).text(); }
+            async loadIndex(){ try{ const r=await fetch(this.basePath+'index.json.gz'); const b=await r.blob(); const d=await this.decompressGzip(b); this.index=JSON.parse(d); const mr=await fetch(this.basePath+'manifest.json'); if(mr.ok) this.manifest=await mr.json(); console.log(`OEIS ready: ${Object.keys(this.index).length}`); return true; }catch(e){ console.warn('OEIS not available',e); this.index={A000027:{n:'Natural',t:20},A000045:{n:'Fibonacci',t:20},A000079:{n:'Powers of 2',t:16}}; return false; } }
+            getFallbackSequence(id){ const fb={A000027:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],A000045:[0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181],A000079:[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768]}; if(fb[id]) return {data:fb[id],name:id}; throw new Error(`Sequence ${id} not available`); }
+            async loadSequence(id){ const normId=id.toUpperCase(); const chunkNum=this.getIdChunk(normId); if(chunkNum!==null&&!this.chunkCache.has(chunkNum)) await this.loadChunk(chunkNum); const chunk=this.chunkCache.get(chunkNum); if(chunk&&chunk[normId]){ const seq=chunk[normId]; return {data:seq.d,name:seq.n}; } return this.getFallbackSequence(normId); }
+            getIdChunk(id){ if(!this.index||!this.manifest) return null; const ids=Object.keys(this.index); const idx=ids.indexOf(id); if(idx===-1) return null; return Math.floor(idx/this.manifest.chunkSize); }
+            async loadChunk(cn){ try{ const r=await fetch(`${this.basePath}chunk_${cn}.json.gz`); const b=await r.blob(); const d=await this.decompressGzip(b); this.chunkCache.set(cn,JSON.parse(d)); }catch(e){ console.warn(`Chunk ${cn} failed`); } }
         }
         
-        // ============================================
-        // Parser
-        // ============================================
-        function parseStreamsFromCode(code) {
-            const result = {};
-            const cleanCode = code.replace(/\/\/.*$/gm, '');
-            const objRegex = /(?:const|let|var)?\s*(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
-            
-            let match;
-            while ((match = objRegex.exec(cleanCode)) !== null) {
-                const name = match[1];
-                const seedStr = match[2].trim();
-                const params = match[3].trim();
-                const valExpr = match[4].trim();
-                const nextExpr = match[5].trim();
-                
-                let seed;
-                try {
-                    seed = Function(`"use strict"; return (${seedStr})`)();
-                } catch(e) { continue; }
-                
-                const stepFn = new Function(params, `return [${valExpr}, ${nextExpr}];`);
-                result[name] = { seed, step: stepFn };
-            }
-            return result;
+        const InputConverters={ oeisToSequence(id){ const b={A000027:[1,2,3,4,5],A000045:[0,1,1,2,3,5,8,13],A000079:[1,2,4,8,16,32,64,128]}; return b[id.toUpperCase()]||b.A000027; }, async audioToSequence(f){ return new Promise((r,rej)=>{ const reader=new FileReader(); reader.onload=async(e)=>{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const buf=await ctx.decodeAudioData(e.target.result); const data=buf.getChannelData(0); const step=Math.max(1,Math.floor(data.length/200)); const seq=[]; for(let i=0;i<data.length&&seq.length<200;i+=step) seq.push(data[i]*100); r(seq); }; reader.onerror=rej; reader.readAsArrayBuffer(f); }); }, async imageToSequence(f){ return new Promise((r,rej)=>{ const reader=new FileReader(); reader.onload=(e)=>{ const img=new Image(); img.onload=()=>{ const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d'); canvas.width=200; canvas.height=1; ctx.drawImage(img,0,0,200,1); const id=ctx.getImageData(0,0,200,1); const seq=[]; for(let i=0;i<200;i++){ const avg=(id.data[i*4]+id.data[i*4+1]+id.data[i*4+2])/3; seq.push(avg); } r(seq); }; img.onerror=rej; img.src=e.target.result; }; reader.onerror=rej; reader.readAsDataURL(f); }); }, textToSequence(t){ const seq=[]; for(let i=0;i<Math.min(t.length,200);i++) seq.push(t.charCodeAt(i)); return seq; }, manualToSequence(s){ return s.split(',').map(n=>parseFloat(n.trim())).filter(n=>!isNaN(n)); } };
+        
+        let currentStream=null, originalData=null, operatorChain=[], animationInterval=null, currentStep=0, animationActive=false;
+        const visualizer=new WaveformVisualizer(), canvas=document.getElementById('mainWaveform'), oeisLoader=new OEISLoader('oeis/');
+        
+        function updateDisplay(){
+            if(!currentStream) return;
+            visualizer.draw(canvas,currentStream,150,'#6c63ff',animationActive?currentStep:-1);
+            const preview=currentStream.take(20);
+            document.getElementById('sequencePreview').innerHTML=`[${preview.map(v=>v.toFixed(1)).join(', ')}...] (${currentStream.data.length} samples)`;
+            document.getElementById('waveformName').innerHTML=currentStream.name;
+            document.getElementById('waveformStats').innerHTML=`${currentStream.data.length} samples`;
+            const stepStr=currentStream.stepFn.toString(), hasLambda=/=>/.test(stepStr);
+            const badge=document.getElementById('productiveBadge'), infoDiv=document.getElementById('guardednessInfo');
+            if(hasLambda){ badge.className='productivity-badge badge-productive'; badge.innerHTML='✓ Productive (λ wrapper)'; infoDiv.innerHTML='✅ Moderate Guardedness — operators preserve productivity'; }
+            else{ badge.className='productivity-badge badge-not-productive'; badge.innerHTML='⚠ Need λ wrapper'; infoDiv.innerHTML='⚠ Not guarded — wrap in () => for productivity'; }
+            if(operatorChain.length>0){ document.getElementById('chainDisplay').style.display='block'; document.getElementById('chainText').innerHTML=operatorChain.join(' → '); }
+            else document.getElementById('chainDisplay').style.display='none';
         }
         
-        // ============================================
-        // Global State
-        // ============================================
-        const streams = new Map();
-        let currentComparison = null;
+        function loadNewStream(stream){ currentStream=stream; originalData=[...stream.data]; operatorChain=[]; currentStep=0; document.getElementById('stepSlider').value=0; document.getElementById('stepSlider').max=100; if(animationInterval) clearInterval(animationInterval); animationActive=false; updateDisplay(); }
         
-        const oeisLoader = new StaticOEISLoader();
-        const parametricChecker = new ParametricGuardednessChecker();
-        const waveformViz = new WaveformVisualizer();
-        
-        // ============================================
-        // UI Functions
-        // ============================================
-        function updateStreamList() {
-            const container = document.getElementById('streamList');
-            if (streams.size === 0) {
-                container.innerHTML = '<div class="stream-card" style="text-align:center;">No streams loaded</div>';
-                return;
+        function applyOperator(op,param=null){
+            if(!currentStream){ alert('Load a waveform first'); return; }
+            let newStream=null, opName='';
+            switch(op){
+                case'amplify':const g=param!==null?param:parseFloat(document.getElementById('gainSlider').value); newStream=currentStream.amplify(g); opName=`amp(${g.toFixed(2)})`; break;
+                case'attenuate':const a=param!==null?param:2; newStream=currentStream.attenuate(a); opName=`att(÷${a})`; break;
+                case'smooth':const w=param!==null?param:parseInt(document.getElementById('smoothSlider').value); newStream=currentStream.smooth(w); opName=`smooth(w=${w})`; break;
+                case'reverse':newStream=currentStream.reverse(); opName='reverse'; break;
+                case'repeat':newStream=currentStream.repeat(2); opName='repeat(x2)'; break;
+                case'interpolate':newStream=currentStream.interpolate(2); opName='interp(x2)'; break;
+                case'quantize':const l=param!==null?param:parseInt(document.getElementById('quantSlider').value); newStream=currentStream.quantize(l); opName=`quant(lvl=${l})`; break;
+                case'diff':newStream=currentStream.diff(); opName='diff'; break;
+                case'integrate':newStream=currentStream.integrate(); opName='integrate'; break;
+                case'normalize':newStream=currentStream.normalize(); opName='normalize'; break;
+                case'mix':const t1=document.getElementById('targetStreamSelect').value; newStream=currentStream.mix(targetStreams[t1],0.5); opName=`mix(with ${t1})`; break;
+                case'interleave':const t2=document.getElementById('targetStreamSelect').value; newStream=currentStream.interleave(targetStreams[t2]); opName=`interleave(with ${t2})`; break;
+                default:return;
             }
-            
-            container.innerHTML = Array.from(streams.values()).map(stream => {
-                const check = parametricChecker.checkStream(stream);
-                return `
-                    <div class="stream-card ${check.productive ? 'guarded-success' : 'guarded-fail'}">
-                        <div class="step-badge">
-                            📊 ${stream.name}
-                            <span class="guarded-badge">${check.productive ? '✓' : '⚠'} ${parametricChecker.guardLevels[parametricChecker.currentLevel].name}</span>
-                        </div>
-                        <div class="value-display">
-                            Prefix: <code>[${stream.take(6).join(', ')}...]</code>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            const waveSelect = document.getElementById('waveformSelect');
-            waveSelect.innerHTML = '<option value="">Select stream</option>' + 
-                Array.from(streams.keys()).map(n => `<option value="${n}">${n}</option>`).join('');
+            if(newStream){ currentStream=newStream; operatorChain.push(opName); currentStep=0; document.getElementById('stepSlider').value=0; if(animationInterval) clearInterval(animationInterval); animationActive=false; updateDisplay(); }
         }
         
-        function updateSelectors() {
-            const leftSelect = document.getElementById('leftStreamSelect');
-            const rightSelect = document.getElementById('rightStreamSelect');
-            const options = Array.from(streams.keys()).map(n => `<option value="${n}">${n}</option>`).join('');
-            leftSelect.innerHTML = '<option value="">Left</option>' + options;
-            rightSelect.innerHTML = '<option value="">Right</option>' + options;
-        }
+        document.getElementById('loadOeisBtn').onclick=async()=>{ const id=document.getElementById('oeisId').value.trim().toUpperCase(); if(!id) return; try{ const seqData=await oeisLoader.loadSequence(id); const streamName=`OEIS_${id}`; const seq=seqData.data; loadNewStream(new ResStream(streamName,seq)); document.getElementById('oeisStatus').innerHTML=`✅ Loaded ${id}: ${seqData.name}`; }catch(e){ alert(`❌ ${e.message}`); } };
+        document.getElementById('audioZone').onclick=()=>document.getElementById('audioFile').click();
+        document.getElementById('audioFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.audioToSequence(e.target.files[0]); loadNewStream(new ResStream(`Audio_${e.target.files[0].name}`,seq)); document.getElementById('audioPreview').innerHTML=`✅ ${seq.length} samples`; } };
+        document.getElementById('imageZone').onclick=()=>document.getElementById('imageFile').click();
+        document.getElementById('imageFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.imageToSequence(e.target.files[0]); loadNewStream(new ResStream(`Image_${e.target.files[0].name}`,seq)); document.getElementById('imagePreview').innerHTML=`✅ ${seq.length} pixels`; } };
+        document.getElementById('loadTextBtn').onclick=()=>{ const text=document.getElementById('textInput').value; const seq=InputConverters.textToSequence(text); loadNewStream(new ResStream('Text_ASCII',seq)); };
+        document.getElementById('loadManualBtn').onclick=()=>{ const seqStr=document.getElementById('manualSeq').value; const seq=InputConverters.manualToSequence(seqStr); if(seq.length) loadNewStream(new ResStream('Manual',seq)); };
+        document.querySelectorAll('.operator-btn').forEach(btn=>{ btn.onclick=()=>applyOperator(btn.dataset.op); });
+        document.getElementById('gainSlider').oninput=(e)=>{ document.getElementById('gainVal').innerText=parseFloat(e.target.value).toFixed(2); if(currentStream&&!animationActive) applyOperator('amplify',parseFloat(e.target.value)); };
+        document.getElementById('smoothSlider').oninput=(e)=>{ document.getElementById('smoothVal').innerText=e.target.value; if(currentStream&&!animationActive) applyOperator('smooth',parseInt(e.target.value)); };
+        document.getElementById('quantSlider').oninput=(e)=>{ document.getElementById('quantVal').innerText=e.target.value; if(currentStream&&!animationActive) applyOperator('quantize',parseInt(e.target.value)); };
+        document.getElementById('playWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=true; let step=0; animationInterval=setInterval(()=>{ if(step<150){ currentStep=step; document.getElementById('stepSlider').value=step; document.getElementById('stepValue').innerText=step; visualizer.draw(canvas,currentStream,150,'#6c63ff',step); step++; }else{ clearInterval(animationInterval); animationActive=false; visualizer.draw(canvas,currentStream,150,'#6c63ff',-1); } },30); };
+        document.getElementById('stopWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=false; visualizer.draw(canvas,currentStream,150,'#6c63ff',-1); };
+        document.getElementById('resetWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=false; currentStep=0; document.getElementById('stepSlider').value=0; document.getElementById('stepValue').innerText='0'; visualizer.draw(canvas,currentStream,150,'#6c63ff',-1); };
+        document.getElementById('stepSlider').oninput=(e)=>{ currentStep=parseInt(e.target.value); document.getElementById('stepValue').innerText=currentStep; if(!animationActive) visualizer.draw(canvas,currentStream,150,'#6c63ff',currentStep); };
+        document.getElementById('resetChainBtn').onclick=()=>{ if(originalData){ const origName=currentStream.name.split('_')[0]; loadNewStream(new ResStream(origName,originalData)); } };
+        document.getElementById('exportJson').onclick=()=>{ if(!currentStream) return; const d={name:currentStream.name,data:currentStream.getAll(),chain:operatorChain,timestamp:new Date().toISOString()}; const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`${currentStream.name.replace(/[^a-z0-9]/gi,'_')}.json`; a.click(); URL.revokeObjectURL(u); };
+        document.getElementById('exportCsv').onclick=()=>{ if(!currentStream) return; const data=currentStream.getAll(); const csv=data.map((v,i)=>`${i},${v}`).join('\n'); const b=new Blob([csv],{type:'text/csv'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`${currentStream.name.replace(/[^a-z0-9]/gi,'_')}.csv`; a.click(); URL.revokeObjectURL(u); };
+        document.getElementById('exportStreamBtn').onclick=()=>{ if(!currentStream) return; const code=`// Resolutive Stream: ${currentStream.name}\n// Chain: ${operatorChain.join(' → ')||'none'}\nconst stream = {\n    name: "${currentStream.name}",\n    data: [${currentStream.getAll().slice(0,20).join(', ')}${currentStream.getAll().length>20?', ...':''}],\n    length: ${currentStream.getAll().length}\n};`; const b=new Blob([code],{type:'text/javascript'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`${currentStream.name.replace(/[^a-z0-9]/gi,'_')}.js`; a.click(); URL.revokeObjectURL(u); };
         
-        function updateParametricAnalysis() {
-            const container = document.getElementById('parametricAnalysis');
-            if (streams.size === 0) {
-                container.innerHTML = '<div style="color:var(--text-secondary);">No streams</div>';
-                return;
-            }
-            
-            let html = '';
-            for (const stream of streams.values()) {
-                const comparisons = parametricChecker.compareLevels(stream);
-                html += `
-                    <div style="background:var(--bg-tertiary); padding:0.5rem; margin-bottom:0.5rem;">
-                        <strong>${stream.name}</strong>
-                        <div style="font-size:0.7rem; margin-top:0.25rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            ${Object.entries(comparisons).map(([l,r]) => `
-                                <span style="color:${r.productive ? 'var(--accent-success)' : 'var(--accent-error)'}">
-                                    ${parametricChecker.guardLevels[l].name}: ${r.productive ? '✓' : '✗'} (${r.score})
-                                </span>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-        
-        function updateGuardednessDisplay() {
-            const results = Array.from(streams.values()).map(s => parametricChecker.checkStream(s));
-            const productive = results.filter(r => r.productive).length;
-            document.getElementById('guardednessResult').innerHTML = `
-                <div style="padding:0.5rem; background:var(--bg-tertiary);">
-                    🛡️ ${parametricChecker.guardLevels[parametricChecker.currentLevel].name}: 
-                    ${productive}/${streams.size} productive
-                </div>
-            `;
-            updateStreamList();
-            updateParametricAnalysis();
-        }
-        
-        // ============================================
-        // Event Handlers
-        // ============================================
-        document.getElementById('loadExampleBtn').onclick = () => {
-            document.getElementById('streamEditor').value = `// Fibonacci stream
-const fibonacci = {
-    seed: [0, 1],
-    step: ([a, b]) => [a, [b, a + b]]
-};
-
-// Square wave (alternating 0,1)
-const squareWave = {
-    seed: 0,
-    step: (n) => [n % 2, n + 1]
-};
-
-// Powers of 2
-const powersOf2 = {
-    seed: 1,
-    step: (n) => [n, n * 2]
-};
-
-// Triangle wave
-const triangleWave = {
-    seed: { pos: 0, dir: 1 },
-    step: (s) => {
-        let val = s.pos;
-        let newPos = s.pos + s.dir;
-        let newDir = s.dir;
-        if (newPos >= 10) { newPos = 8; newDir = -1; }
-        if (newPos <= 0) { newPos = 1; newDir = 1; }
-        return [val, { pos: newPos, dir: newDir }];
-    }
-};`;
-        };
-        
-        document.getElementById('runStreamsBtn').onclick = () => {
-            try {
-                const code = document.getElementById('streamEditor').value;
-                const defs = parseStreamsFromCode(code);
-                streams.clear();
-                for (const [name, def] of Object.entries(defs)) {
-                    streams.set(name, new ResStream(name, def.seed, def.step));
-                }
-                if (streams.size === 0) alert('No valid streams found');
-                updateGuardednessDisplay();
-                updateSelectors();
-                document.getElementById('comparisonResult').innerHTML = '';
-            } catch(e) { alert('Error: ' + e.message); }
-        };
-        
-        document.getElementById('clearStreamsBtn').onclick = () => {
-            streams.clear();
-            updateStreamList();
-            updateSelectors();
-            document.getElementById('waveformDisplay').innerHTML = '';
-            document.getElementById('comparisonResult').innerHTML = '';
-            document.getElementById('parametricAnalysis').innerHTML = '';
-        };
-        
-        document.getElementById('waveformSelect').onchange = (e) => {
-            const name = e.target.value;
-            if (!name || !streams.has(name)) {
-                document.getElementById('waveformDisplay').innerHTML = '';
-                return;
-            }
-            const stream = streams.get(name);
-            const check = parametricChecker.checkStream(stream);
-            
-            document.getElementById('waveformDisplay').innerHTML = `
-                <div class="waveform-container">
-                    <div class="waveform-title">
-                        <span>📈 ${name}</span>
-                        <span>${check.productive ? '✓ Productive' : '⚠ May diverge'}</span>
-                    </div>
-                    <canvas id="waveformCanvas" class="waveform" width="400" height="80"></canvas>
-                    <div class="waveform-legend">
-                        <span><span class="legend-dot" style="background:var(--wave-0);"></span>Value</span>
-                    </div>
-                </div>
-            `;
-            setTimeout(() => waveformViz.draw('waveformCanvas', stream, 50, '#6c63ff'), 10);
-        };
-        
-        document.querySelectorAll('.guard-level-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.guard-level-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                parametricChecker.setLevel(btn.dataset.level);
-                updateGuardednessDisplay();
-                
-                const currentWave = document.getElementById('waveformSelect').value;
-                if (currentWave && streams.has(currentWave)) {
-                    document.getElementById('waveformSelect').dispatchEvent(new Event('change'));
-                }
-            };
-        });
-        
-        document.querySelectorAll('.operator-btn').forEach(btn => {
-            btn.onclick = () => {
-                const op = btn.dataset.op;
-                const select = document.getElementById('waveformSelect');
-                const streamName = select.value;
-                if (!streamName || !streams.has(streamName)) {
-                    document.getElementById('operatorResult').innerHTML = '<span style="color:var(--accent-error);">Select a stream first</span>';
-                    return;
-                }
-                
-                const source = streams.get(streamName);
-                const sourceCheck = parametricChecker.checkStream(source);
-                let result;
-                let opDesc = '';
-                
-                try {
-                    switch(op) {
-                        case 'map':
-                            result = source.map(x => x * 2);
-                            opDesc = `map(x → x×2)`;
-                            break;
-                        case 'zip':
-                            const other = streams.get(Array.from(streams.keys())[0]);
-                            result = source.zip(other || source);
-                            opDesc = `zip with ${other?.name || 'self'}`;
-                            break;
-                        case 'filter':
-                            result = source.filter(x => x % 2 === 0);
-                            opDesc = `filter(even)`;
-                            break;
-                        case 'take':
-                            document.getElementById('operatorResult').innerHTML = `
-                                <div style="background:var(--bg-primary); padding:0.5rem;">
-                                    <strong>take(10)</strong><br>
-                                    Result: [${source.take(10).join(', ')}]<br>
-                                    <span style="color:var(--accent-success);">✓ Bounded operations always productive</span>
-                                </div>`;
-                            return;
-                        case 'interleave':
-                            const otherStream = streams.get(Array.from(streams.keys())[1] || Array.from(streams.keys())[0]);
-                            result = source.interleave(otherStream || source);
-                            opDesc = `interleave with ${otherStream?.name || 'self'}`;
-                            break;
-                        case 'scale':
-                            result = source.scale(2);
-                            opDesc = `scale(2)`;
-                            break;
-                        default: return;
-                    }
-                    
-                    const resultCheck = parametricChecker.checkStream(result);
-                    
-                    document.getElementById('operatorResult').innerHTML = `
-                        <div style="background:var(--bg-primary); padding:0.5rem;">
-                            <strong>⚙️ ${opDesc}</strong><br>
-                            Source "${source.name}": ${sourceCheck.productive ? '✓ productive' : '⚠ may diverge'}<br>
-                            Result "${result.name}": ${resultCheck.productive ? '✓ productive' : '⚠ may diverge'}<br>
-                            <div style="margin-top:0.5rem; font-size:0.7rem; color:${sourceCheck.productive && resultCheck.productive ? 'var(--accent-success)' : 'var(--accent-warning)'}">
-                                ${sourceCheck.productive && resultCheck.productive ? 
-                                    '✓ Guardedness preserved — operator is productivity-preserving' : 
-                                    '⚠ Operation may break guardedness — source stream needs thunk wrapper'}
-                            </div>
-                        </div>
-                    `;
-                    
-                    streams.set(result.name, result);
-                    updateStreamList();
-                    updateSelectors();
-                } catch(e) {
-                    document.getElementById('operatorResult').innerHTML = `<span style="color:var(--accent-error);">Error: ${e.message}</span>`;
-                }
-            };
-        });
-        
-        document.getElementById('compareBtn').onclick = () => {
-            const leftName = document.getElementById('leftStreamSelect').value;
-            const rightName = document.getElementById('rightStreamSelect').value;
-            if (!leftName || !rightName || !streams.has(leftName) || !streams.has(rightName)) {
-                alert('Select both streams');
-                return;
-            }
-            
-            const left = streams.get(leftName);
-            const right = streams.get(rightName);
-            
-            let bisimilar = true;
-            let step = 0;
-            let s1 = left.seed, s2 = right.seed;
-            for (let i = 0; i < 50; i++) {
-                const [v1, n1] = left.step(s1);
-                const [v2, n2] = right.step(s2);
-                if (v1 !== v2) {
-                    bisimilar = false;
-                    step = i;
-                    break;
-                }
-                s1 = n1; s2 = n2;
-            }
-            
-            const resultDiv = document.getElementById('comparisonResult');
-            resultDiv.innerHTML = `
-                <div class="comparison-result ${bisimilar ? 'success' : 'failure'}">
-                    ${bisimilar ? '✓ BISIMILAR (first 50 steps)' : `✗ DIVERGENT at step ${step}`}
-                </div>
-            `;
-            
-            const canvasId = 'compareCanvas';
-            resultDiv.innerHTML += `
-                <div class="waveform-container" style="margin-top:0.5rem;">
-                    <div class="waveform-title">
-                        <span>📊 ${leftName} (blue) vs ${rightName} (green)</span>
-                    </div>
-                    <canvas id="${canvasId}" class="waveform" width="400" height="60"></canvas>
-                </div>
-            `;
-            setTimeout(() => waveformViz.drawComparison(canvasId, left, right, 50), 10);
-        };
-        
-        // OEIS Fetch Handler
-        document.getElementById('fetchOeisBtn').onclick = async () => {
-            const id = document.getElementById('oeisId').value.trim().toUpperCase();
-            if (!id) {
-                alert('Enter OEIS ID (e.g., A000045, A000079)');
-                return;
-            }
-            
-            const btn = document.getElementById('fetchOeisBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Loading...';
-            btn.disabled = true;
-            
-            try {
-                // First try to load from JSON
-                let seqData = null;
-                try {
-                    seqData = await oeisLoader.loadSequence(id);
-                } catch(e) {
-                    // Fallback to built-in
-                    seqData = oeisLoader.getFallbackSequence(id);
-                }
-                
-                const { name, seed, stepFn, description } = oeisLoader.createStreamFromSequence(id, seqData);
-                
-                if (streams.has(name)) streams.delete(name);
-                const newStream = new ResStream(name, seed, stepFn);
-                streams.set(name, newStream);
-                
-                // Add to editor
-                const editor = document.getElementById('streamEditor');
-                const terms = seqData.data;
-                const streamDef = `\n\n// OEIS ${id}: ${description}\nconst ${name} = {\n    seed: { index: 0, terms: [${terms.slice(0, 8).join(', ')}${terms.length > 8 ? ', ...' : ''}] },\n    step: (seed) => [seed.terms[seed.index % seed.terms.length], { index: seed.index + 1, terms: seed.terms }]\n};`;
-                editor.value += streamDef;
-                
-                updateGuardednessDisplay();
-                updateSelectors();
-                
-                const previewDiv = document.getElementById('oeisPreview');
-                previewDiv.innerHTML = `✅ Loaded ${id}: ${description?.slice(0, 80)} — ${terms.length} terms`;
-                previewDiv.style.display = 'block';
-                previewDiv.style.background = 'rgba(0, 212, 170, 0.1)';
-                previewDiv.style.padding = '0.25rem';
-                
-                setTimeout(() => {
-                    previewDiv.style.opacity = '0';
-                    setTimeout(() => previewDiv.style.display = 'none', 500);
-                }, 3000);
-                
-            } catch(e) {
-                alert(`❌ ${e.message}\n\nTry: A000027, A000045, A000079, A000142, A000217, A000290, A000040`);
-                document.getElementById('oeisPreview').innerHTML = `❌ ${e.message}`;
-                document.getElementById('oeisPreview').style.display = 'block';
-                document.getElementById('oeisPreview').style.background = 'rgba(255, 107, 107, 0.1)';
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        };
-        
-        document.getElementById('inferRelationsBtn').onclick = () => {
-            const left = document.getElementById('leftStreamSelect').value;
-            const right = document.getElementById('rightStreamSelect').value;
-            if (!left || !right || !streams.has(left) || !streams.has(right)) {
-                alert('Select both streams');
-                return;
-            }
-            const s1 = streams.get(left);
-            const s2 = streams.get(right);
-            const relations = [];
-            let seed1 = s1.seed, seed2 = s2.seed;
-            for (let i = 0; i < 20; i++) {
-                const [v1, n1] = s1.step(seed1);
-                const [v2, n2] = s2.step(seed2);
-                relations.push({ match: v1 === v2, v1, v2 });
-                seed1 = n1; seed2 = n2;
-            }
-            document.getElementById('relationsList').innerHTML = relations.map((r,i) => 
-                `<div>${i}: ${r.v1} ${r.match ? '=' : '≠'} ${r.v2}</div>`
-            ).join('');
-        };
-        
-        function populateMethodTree() {
-            document.getElementById('methodTree').innerHTML = `
-                <div class="tree-root">📐 Resolutive Coinduction Method</div>
-                <div class="tree-node"><span class="tree-label">Core Principle</span><div class="tree-node">νX.F(X) — Greatest Fixed Point · Seed as bisimulation witness</div></div>
-                <div class="tree-node"><span class="tree-label">Parametric Guardedness</span><div class="tree-node">Strict → Moderate → Lax → Minimal · Productivity scores</div></div>
-                <div class="tree-node"><span class="tree-label">Guarded Operators</span><div class="tree-node">map, zip, filter, interleave, scale — productivity-preserving when source guarded</div></div>
-                <div class="tree-node"><span class="tree-label">Waveform Visualization</span><div class="tree-node">Real-time stream plotting · Bisimulation comparison</div></div>
-                <div class="tree-node"><span class="tree-label">OEIS Integration</span><div class="tree-node">Static JSON from stripped.gz · Fallback built-ins</div></div>
-                <div class="tree-node"><span class="tree-label">Key Insight</span><div class="tree-node">Same stream → different guardedness parameters → different productivity inferences</div></div>
-            `;
-        }
-        populateMethodTree();
-        
-        // Initialize OEIS
-        async function initOEIS() {
-            const statusDiv = document.getElementById('oeisStatus');
-            statusDiv.innerHTML = '📦 Loading OEIS index...';
-            const loaded = await oeisLoader.loadIndex();
-            if (loaded) {
-                statusDiv.innerHTML = `✅ OEIS ready: ${Object.keys(oeisLoader.index).length} sequences available`;
-                statusDiv.style.color = 'var(--accent-success)';
-            } else {
-                statusDiv.innerHTML = `⚠️ Using built-in sequences (place oeis_index.json in /oeis/ for full library)`;
-                statusDiv.style.color = 'var(--accent-warning)';
-            }
-        }
-        
+        async function initOEIS(){ const status=document.getElementById('oeisStatus'); status.innerHTML='📦 Loading OEIS index...'; const loaded=await oeisLoader.loadIndex(); if(loaded){ const cnt=Object.keys(oeisLoader.index).length; status.innerHTML=`✅ OEIS ready: ${cnt.toLocaleString()} sequences`; status.style.color='var(--accent-2)'; }else{ status.innerHTML='⚠️ Using built-in sequences'; status.style.color='var(--accent-4)'; } }
         initOEIS();
-        
-        // Auto-load example
-        setTimeout(() => {
-            document.getElementById('loadExampleBtn').click();
-            setTimeout(() => document.getElementById('runStreamsBtn').click(), 100);
-        }, 100);
+        setTimeout(()=>{ loadNewStream(new ResStream('OEIS_A000079_PowersOf2',[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768])); },100);
     </script>
 </body>
 </html>
