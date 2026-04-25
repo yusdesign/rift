@@ -1,7 +1,3 @@
-{
-  "totalSequences": 394981,
-  "chunks": 79,
-  "chunkSize": 5000,
-  "version": "1.0",
-  "generated": "2026-04-24T22:03:10.661Z"
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:d048c478ce971dc5657629ca5bf4435dd086852b95a34ce1733b638143c4726c
+size 130
