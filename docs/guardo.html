@@ -3,151 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waveform Modifier Studio | Resolutive Coinduction · Sound · Inference</title>
+    <title>Resolutive Synth Studio | Waveform · Synthesis · Coinduction</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-primary: #0a0a0f; --bg-secondary: #12121a; --bg-tertiary: #1a1a2a;
-            --text-primary: #e2e2e2; --text-secondary: #8888aa;
-            --accent-1: #6c63ff; --accent-2: #00d4aa; --accent-3: #ffd93d; --accent-4: #ff6b6b;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a2a;
+            --text-primary: #e2e2e2;
+            --text-secondary: #8888aa;
+            --accent-1: #6c63ff;
+            --accent-2: #00d4aa;
+            --accent-3: #ffd93d;
+            --accent-4: #ff6b6b;
             --border: #2a2a3a;
-            --score-high: #00d4aa; --score-mid: #ffd93d; --score-low: #ff6b6b;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.5; }
-        .header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; }
-        .header h1 { font-size: 1.5rem; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block; }
-        .header .subtitle { color: var(--text-secondary); font-size: 0.7rem; margin-left: 1rem; display: inline-block; }
-        .main-container { max-width: 100%; padding: 0.75rem; }
         
-        /* Input Row */
-        .inputs-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; background: var(--bg-secondary); padding: 0.5rem; border: 1px solid var(--border); }
-        .input-group { flex: 1; min-width: 140px; background: var(--bg-tertiary); padding: 0.4rem; border-left: 3px solid var(--accent-1); }
-        .input-group label { font-size: 0.65rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem; }
-        .input-group input, .input-group textarea { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.25rem; font-size: 0.7rem; }
-        .input-group textarea { height: 45px; resize: vertical; }
-        .file-zone { border: 1px dashed var(--border); padding: 0.25rem; text-align: center; font-size: 0.65rem; cursor: pointer; margin-top: 0.2rem; }
-        .file-zone:hover { border-color: var(--accent-1); }
-        
-        /* Waveform Section */
-        .waveform-section { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem; margin-bottom: 0.75rem; }
-        .waveform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
-        .waveform-name { font-weight: 600; font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .productivity-badge { padding: 0.15rem 0.4rem; font-size: 0.65rem; border-radius: 0px; }
-        .badge-productive { background: rgba(0, 212, 170, 0.2); color: var(--accent-2); }
-        .badge-not-productive { background: rgba(255, 107, 107, 0.2); color: var(--accent-4); }
-        canvas { width: 100%; height: 100px; background: #0a0a0f; border: 1px solid var(--border); display: block; cursor: pointer; }
-        .waveform-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap; }
-        .sequence-preview { font-family: 'Fira Code', monospace; font-size: 0.55rem; background: var(--bg-primary); padding: 0.3rem; margin-top: 0.4rem; overflow-x: auto; white-space: nowrap; max-height: 50px; }
-        
-        /* Operators */
-        .operators-section { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem; margin-bottom: 0.75rem; }
-        .operator-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 0.4rem; margin-top: 0.5rem; }
-        .operator-btn { padding: 0.3rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.6rem; transition: all 0.1s; }
-        .operator-btn:hover { border-color: var(--accent-1); transform: translateY(-1px); }
-        .operator-btn.chain { background: rgba(108, 99, 255, 0.15); }
-        
-        /* Controls Row */
-        .controls-row { display: grid; grid-template-columns: 1.2fr 0.8fr 1fr; gap: 0.75rem; }
-        .control-panel { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.6rem; }
-        .control-panel h4 { font-size: 0.7rem; margin-bottom: 0.4rem; color: var(--accent-2); }
-        .slider-container { margin-bottom: 0.4rem; }
-        .slider-container label { font-size: 0.65rem; display: flex; justify-content: space-between; }
-        input[type="range"] { width: 100%; accent-color: var(--accent-1); }
-        .btn { padding: 0.25rem 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.65rem; }
-        .btn-primary { background: var(--accent-1); border-color: var(--accent-1); }
+        /* Header */
+        .header { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); border-bottom: 1px solid var(--border); padding: 0.6rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .header h1 { font-size: 1.3rem; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .header .subtitle { color: var(--text-secondary); font-size: 0.65rem; }
+        .btn { padding: 0.25rem 0.6rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.65rem; transition: all 0.1s; }
+        .btn:hover { border-color: var(--accent-1); transform: translateY(-1px); }
+        .btn-primary { background: var(--accent-1); border-color: var(--accent-1); color: white; }
         .btn-success { background: var(--accent-2); border-color: var(--accent-2); color: #0a0a0f; }
         .btn-warning { background: var(--accent-3); border-color: var(--accent-3); color: #0a0a0f; }
-        .chain-display { background: var(--bg-tertiary); padding: 0.3rem; font-size: 0.55rem; font-family: monospace; margin-top: 0.5rem; border-left: 3px solid var(--accent-1); word-break: break-all; max-height: 45px; overflow-y: auto; }
-        select { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.25rem; font-size: 0.65rem; width: 100%; }
-        .oeis-status { font-size: 0.55rem; color: var(--text-secondary); margin-top: 0.2rem; }
         
-        /* Inference Rating Panel */
-        .inference-panel { background: var(--bg-tertiary); padding: 0.5rem; margin-top: 0.5rem; border-top: 2px solid var(--accent-1); }
-        .score-row { display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0; }
-        .score-label { font-size: 0.6rem; color: var(--text-secondary); }
-        .score-bar { flex: 1; height: 6px; background: var(--bg-primary); margin: 0 0.5rem; }
-        .score-fill { height: 100%; width: 0%; transition: width 0.3s; }
-        .score-value { font-size: 0.6rem; font-weight: bold; min-width: 35px; text-align: right; }
-        .total-score { font-size: 0.8rem; font-weight: bold; text-align: center; margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid var(--border); }
+        /* Main Layout */
+        .main-container { max-width: 1400px; margin: 0 auto; padding: 0.75rem; }
         
-        @media (max-width: 800px) { .controls-row { grid-template-columns: 1fr; gap: 0.5rem; } .inputs-row { flex-direction: column; } }
+        /* Row 1: Input Sources - Horizontal Compact */
+        .inputs-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .input-card { flex: 1; min-width: 140px; background: var(--bg-tertiary); padding: 0.4rem; border-left: 3px solid var(--accent-1); }
+        .input-card label { font-size: 0.6rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem; }
+        .input-card input, .input-card textarea { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.25rem; font-size: 0.7rem; }
+        .input-card textarea { height: 38px; resize: vertical; font-size: 0.65rem; }
+        .file-zone { border: 1px dashed var(--border); padding: 0.2rem; text-align: center; font-size: 0.6rem; cursor: pointer; margin-top: 0.2rem; }
+        .file-zone:hover { border-color: var(--accent-1); background: rgba(108,99,255,0.1); }
+        .load-btn { width: 100%; margin-top: 0.2rem; padding: 0.2rem; font-size: 0.6rem; }
+        
+        /* Row 2: Waveform & Synthesis */
+        .synth-section { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem; margin-bottom: 0.75rem; }
+        .waveform-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+        .waveform-name { font-weight: 600; font-size: 0.8rem; font-family: monospace; }
+        .badge { padding: 0.15rem 0.4rem; font-size: 0.6rem; }
+        .badge-productive { background: rgba(0,212,170,0.2); color: var(--accent-2); }
+        canvas { width: 100%; height: 100px; background: #0a0a0f; border: 1px solid var(--border); display: block; cursor: crosshair; }
+        .waveform-controls { display: flex; gap: 0.4rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .sequence-preview { font-family: monospace; font-size: 0.55rem; background: var(--bg-primary); padding: 0.3rem; margin-top: 0.4rem; overflow-x: auto; white-space: nowrap; }
+        
+        /* Row 3: Operators & Synthesis */
+        .operators-row { display: grid; grid-template-columns: 1fr 280px; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .operators-panel { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.6rem; }
+        .operator-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 0.3rem; margin-top: 0.4rem; }
+        .operator-btn { padding: 0.25rem; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-size: 0.6rem; }
+        .operator-btn:hover { border-color: var(--accent-1); }
+        .operator-btn.chain { background: rgba(108,99,255,0.15); }
+        
+        /* Synth Panel */
+        .synth-panel { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.6rem; }
+        .synth-panel h4 { font-size: 0.7rem; margin-bottom: 0.4rem; color: var(--accent-2); }
+        .synth-control { margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .synth-control label { font-size: 0.6rem; width: 70px; }
+        input[type="range"] { flex: 1; accent-color: var(--accent-1); height: 3px; }
+        
+        /* Row 4: Controls */
+        .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .control-panel { background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.6rem; }
+        .chain-display { background: var(--bg-tertiary); padding: 0.3rem; font-size: 0.55rem; font-family: monospace; margin-top: 0.4rem; border-left: 3px solid var(--accent-1); word-break: break-all; max-height: 50px; overflow-y: auto; }
+        .score-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.2rem 0; }
+        .score-bar { flex: 1; height: 5px; background: var(--bg-primary); }
+        .score-fill { height: 100%; width: 0%; transition: width 0.2s; }
+        
+        @media (max-width: 800px) {
+            .operators-row { grid-template-columns: 1fr; }
+            .controls-row { grid-template-columns: 1fr; }
+            .inputs-row { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🎛️ Waveform Modifier Studio</h1>
-        <span class="subtitle">Resolutive Coinduction · Guarded Operators · OEIS · Sound Synthesis · Inference Rating</span>
+        <div><h1>🎛️ Resolutive Synth Studio</h1><div class="subtitle">Coinductive Waveform Synthesis · Guarded Operators · Real-time Audio</div></div>
+        <div><span id="oeisStatus" style="font-size:0.6rem;">📦 Loading OEIS...</span></div>
     </div>
 
     <div class="main-container">
-        <!-- Row 1: Input Sources -->
+        <!-- ROW 1: Input Sources - Horizontal -->
         <div class="inputs-row">
-            <div class="input-group"><label>🔢 OEIS</label><div style="display:flex; gap:0.3rem;"><input type="text" id="oeisId" placeholder="A000079" value="A000079"><button class="btn" id="loadOeisBtn">Load</button></div><div id="oeisStatus" class="oeis-status">📦 Loading...</div></div>
-            <div class="input-group"><label>🎵 Audio</label><div class="file-zone" id="audioZone">📁 Drop audio</div><input type="file" id="audioFile" accept="audio/*" style="display:none;"><div id="audioPreview" style="font-size:0.55rem;"></div></div>
-            <div class="input-group"><label>🖼️ Image</label><div class="file-zone" id="imageZone">📁 Drop image</div><input type="file" id="imageFile" accept="image/*" style="display:none;"><div id="imagePreview" style="font-size:0.55rem;"></div></div>
-            <div class="input-group"><label>📝 Text</label><textarea id="textInput" placeholder="Type..."></textarea><button class="btn" id="loadTextBtn" style="width:100%; margin-top:0.2rem;">Convert</button></div>
-            <div class="input-group"><label>✏️ Manual</label><input type="text" id="manualSeq" placeholder="1,2,3,4,5"><button class="btn" id="loadManualBtn" style="width:100%; margin-top:0.2rem;">Load</button></div>
+            <div class="input-card"><label>🔢 OEIS Sequence</label><div style="display:flex; gap:0.3rem;"><input type="text" id="oeisId" placeholder="A000079" value="A000079"><button class="btn" id="loadOeisBtn">Load</button></div></div>
+            <div class="input-card"><label>🎵 Audio File</label><div class="file-zone" id="audioZone">📁 Click or drop</div><input type="file" id="audioFile" accept="audio/*" style="display:none;"><div id="audioPreview" style="font-size:0.5rem;"></div></div>
+            <div class="input-card"><label>🖼️ Image File</label><div class="file-zone" id="imageZone">📁 Click or drop</div><input type="file" id="imageFile" accept="image/*" style="display:none;"><div id="imagePreview" style="font-size:0.5rem;"></div></div>
+            <div class="input-card"><label>📝 Text / Manual</label><textarea id="textInput" placeholder="Type text or numbers (1,2,3...)"></textarea><button class="load-btn" id="loadTextBtn">Convert</button></div>
         </div>
 
-        <!-- Row 2: Waveform Display -->
-        <div class="waveform-section">
+        <!-- ROW 2: Waveform Display -->
+        <div class="synth-section">
             <div class="waveform-header">
-                <span class="waveform-name" id="waveformName" title="Click to see full name">No waveform</span>
-                <span id="productiveBadge" class="productivity-badge badge-productive">✓ Productive</span>
-                <span id="waveformStats" style="font-size:0.6rem;"></span>
+                <span class="waveform-name" id="waveformName">Select source → apply operators → play</span>
+                <span id="productiveBadge" class="badge badge-productive">✓ Productive</span>
             </div>
             <canvas id="mainWaveform" width="800" height="100"></canvas>
             <div class="waveform-controls">
-                <button id="playWaveform" class="btn">▶</button>
-                <button id="stopWaveform" class="btn">⏸</button>
-                <button id="resetWaveform" class="btn">↺</button>
+                <button id="playAnimBtn" class="btn">▶ Animate</button>
+                <button id="stopAnimBtn" class="btn">⏸</button>
                 <input type="range" id="stepSlider" min="0" max="100" value="0" style="flex:1;">
-                <span id="stepValue" style="font-size:0.6rem;">0</span>
-                <button id="playSoundBtn" class="btn btn-primary">🎵 Play Sound</button>
+                <span id="stepValue" style="font-size:0.6rem; width:35px;">0</span>
+                <button id="playSoundBtn" class="btn btn-primary">🎵 Play Synth</button>
                 <button id="stopSoundBtn" class="btn">⏹️ Stop</button>
             </div>
             <div id="sequencePreview" class="sequence-preview"></div>
             <div id="chainDisplay" class="chain-display" style="display:none;"><strong>Chain:</strong> <span id="chainText"></span></div>
         </div>
 
-        <!-- Row 3: Guarded Operators -->
-        <div class="operators-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><span style="font-weight:600;">⚙️ Guarded Operators</span><span id="guardednessInfo" style="font-size:0.6rem;"></span></div>
-            <div class="operator-grid">
-                <button class="operator-btn" data-op="amplify">📈 Amplify</button><button class="operator-btn" data-op="attenuate">📉 Attenuate</button>
-                <button class="operator-btn" data-op="smooth">🌀 Smooth</button><button class="operator-btn" data-op="reverse">🔄 Reverse</button>
-                <button class="operator-btn" data-op="repeat">🔁 Repeat</button><button class="operator-btn" data-op="interpolate">📐 Interpolate</button>
-                <button class="operator-btn" data-op="quantize">🎯 Quantize</button><button class="operator-btn" data-op="diff">📊 Diff</button>
-                <button class="operator-btn" data-op="integrate">📈 Integrate</button><button class="operator-btn chain" data-op="normalize">⚖️ Normalize</button>
-                <button class="operator-btn chain" data-op="mix">🔗 Mix</button><button class="operator-btn chain" data-op="interleave">🔄 Interleave</button>
+        <!-- ROW 3: Operators + Synth Controls -->
+        <div class="operators-row">
+            <div class="operators-panel">
+                <div style="font-weight:600; font-size:0.7rem;">⚙️ Guarded Operators</div>
+                <div class="operator-grid">
+                    <button class="operator-btn" data-op="amplify">📈 Amplify</button>
+                    <button class="operator-btn" data-op="attenuate">📉 Attenuate</button>
+                    <button class="operator-btn" data-op="smooth">🌀 Smooth</button>
+                    <button class="operator-btn" data-op="reverse">🔄 Reverse</button>
+                    <button class="operator-btn" data-op="repeat">🔁 Repeat</button>
+                    <button class="operator-btn" data-op="interpolate">📐 Interpolate</button>
+                    <button class="operator-btn" data-op="quantize">🎯 Quantize</button>
+                    <button class="operator-btn" data-op="diff">📊 Diff</button>
+                    <button class="operator-btn" data-op="integrate">📈 Integrate</button>
+                    <button class="operator-btn chain" data-op="normalize">⚖️ Normalize</button>
+                    <button class="operator-btn chain" data-op="mix">🔗 Mix Sine</button>
+                    <button class="operator-btn chain" data-op="interleave">🔄 Interleave Sine</button>
+                </div>
+                <div style="margin-top:0.5rem;"><span id="guardednessInfo" style="font-size:0.55rem;"></span></div>
+            </div>
+            <div class="synth-panel">
+                <h4>🎹 Linear Synthesizer</h4>
+                <div class="synth-control"><label>Master Gain</label><input type="range" id="synthGain" min="0" max="1" step="0.01" value="0.5"><span id="gainVal" style="font-size:0.6rem; width:35px;">0.50</span></div>
+                <div class="synth-control"><label>Speed (Hz)</label><input type="range" id="synthSpeed" min="0.5" max="4" step="0.05" value="1.0"><span id="speedVal" style="font-size:0.6rem;">1.00</span></div>
+                <div class="synth-control"><label>Wave Warp</label><input type="range" id="warpSlider" min="0" max="1" step="0.01" value="0"><span id="warpVal" style="font-size:0.6rem;">0.00</span></div>
+                <div class="synth-control"><label>Attack (ms)</label><input type="range" id="attackSlider" min="0" max="200" step="10" value="10"><span id="attackVal" style="font-size:0.6rem;">10</span></div>
+                <div style="margin-top:0.4rem;"><button id="resetChainBtn" class="btn" style="width:100%;">🗑 Reset to Original</button></div>
             </div>
         </div>
 
-        <!-- Row 4: Controls + Inference -->
+        <!-- ROW 4: Export & Inference -->
         <div class="controls-row">
-            <div class="control-panel"><h4>🎚️ Parameters</h4>
-                <div class="slider-container"><label>Gain <span id="gainVal">1.0</span></label><input type="range" id="gainSlider" min="0" max="3" step="0.05" value="1"></div>
-                <div class="slider-container"><label>Smooth Window <span id="smoothVal">1</span></label><input type="range" id="smoothSlider" min="1" max="10" step="1" value="1"></div>
-                <div class="slider-container"><label>Quantization <span id="quantVal">4</span></label><input type="range" id="quantSlider" min="2" max="16" step="1" value="4"></div>
-                <div class="slider-container"><label>Sound Speed <span id="speedVal">1.0</span></label><input type="range" id="soundSpeed" min="0.5" max="2" step="0.01" value="1"></div>
-            </div>
-            <div class="control-panel"><h4>🔗 Mix Target</h4>
-                <select id="targetStreamSelect"><option value="sine">Sine Wave</option><option value="triangle">Triangle Wave</option><option value="square">Square Wave</option></select>
-                <button id="resetChainBtn" class="btn" style="width:100%; margin-top:0.5rem;">🗑 Reset Chain</button>
-                <div class="export-options" style="margin-top:0.5rem; display:flex; gap:0.3rem;">
-                    <button id="exportJson" class="btn">JSON</button><button id="exportCsv" class="btn">CSV</button><button id="exportStreamBtn" class="btn btn-success">Save</button>
+            <div class="control-panel">
+                <div style="font-weight:600; font-size:0.7rem; margin-bottom:0.3rem;">💾 Export</div>
+                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                    <button id="exportJson" class="btn">JSON</button>
+                    <button id="exportCsv" class="btn">CSV</button>
+                    <button id="exportStreamBtn" class="btn btn-success">Save Stream</button>
                 </div>
+                <details style="margin-top:0.4rem;"><summary style="cursor:pointer; font-size:0.55rem;">📐 Resolutive Coinduction</summary>
+                <div style="font-size:0.5rem; margin-top:0.2rem;">νX.F(X) — Greatest Fixed Point | λ wrapper preserves productivity</div></details>
             </div>
-            <div class="control-panel"><h4>📊 Resolutive Inference Rating</h4>
-                <div id="inferencePanel" class="inference-panel">
-                    <div class="score-row"><span class="score-label">Productivity</span><div class="score-bar"><div id="prodFill" class="score-fill" style="background:var(--score-high); width:0%"></div></div><span id="prodScore" class="score-value">0%</span></div>
-                    <div class="score-row"><span class="score-label">Complexity</span><div class="score-bar"><div id="compFill" class="score-fill" style="background:var(--score-mid); width:0%"></div></div><span id="compScore" class="score-value">0%</span></div>
-                    <div class="score-row"><span class="score-label">Information</span><div class="score-bar"><div id="infoFill" class="score-fill" style="background:var(--accent-1); width:0%"></div></div><span id="infoScore" class="score-value">0%</span></div>
-                    <div class="score-row"><span class="score-label">Spectral</span><div class="score-bar"><div id="specFill" class="score-fill" style="background:var(--accent-3); width:0%"></div></div><span id="specScore" class="score-value">0%</span></div>
-                    <div class="total-score"><span id="totalScore">Resolutive Score: 0%</span></div>
-                    <details style="margin-top:0.3rem;"><summary style="cursor:pointer; font-size:0.55rem;">What this means</summary>
-                    <div style="font-size:0.5rem; margin-top:0.2rem;">Productivity = guardedness | Complexity = chain depth | Information = entropy | Spectral = frequency variety</div></details>
-                </div>
+            <div class="control-panel">
+                <div style="font-weight:600; font-size:0.7rem; margin-bottom:0.3rem;">📊 Resolutive Score</div>
+                <div class="score-row"><span style="font-size:0.6rem;">Productivity</span><div class="score-bar"><div id="prodFill" class="score-fill" style="background:var(--accent-2); width:0%"></div></div><span id="prodScore" style="font-size:0.6rem;">0%</span></div>
+                <div class="score-row"><span style="font-size:0.6rem;">Complexity</span><div class="score-bar"><div id="compFill" class="score-fill" style="background:var(--accent-3); width:0%"></div></div><span id="compScore" style="font-size:0.6rem;">0%</span></div>
+                <div class="score-row"><span style="font-size:0.6rem;">Information</span><div class="score-bar"><div id="infoFill" class="score-fill" style="background:var(--accent-1); width:0%"></div></div><span id="infoScore" style="font-size:0.6rem;">0%</span></div>
+                <div class="score-row" style="margin-top:0.3rem;"><strong style="font-size:0.65rem;">Total:</strong><span id="totalScore" style="font-size:0.65rem;">0%</span></div>
             </div>
         </div>
     </div>
@@ -158,35 +175,30 @@
         // ============================================
         class ResStream {
             constructor(name, data, stepFn = null) {
-                this.name = name.length > 35 ? name.slice(0, 32) + '...' : name;
+                this.name = name.length > 30 ? name.slice(0, 27) + '...' : name;
                 this.fullName = name;
                 this.data = [...data];
                 this.stepFn = stepFn || ((idx, arr) => arr[idx % arr.length]);
-                this.cache = new Map();
             }
-            
             take(n) { const r = []; for (let i = 0; i < n; i++) r.push(this.stepFn(i, this.data)); return r; }
             getAll() { return this.data; }
             
-            amplify(g) { const s = this; return new ResStream(`${s.name.split('_')[0]}_amp`, s.data, (i,_) => s.stepFn(i, s.data) * g); }
+            amplify(g) { const s = this; return new ResStream(`${s.name}_amp`, s.data, (i,_) => s.stepFn(i, s.data) * g); }
             attenuate(f) { return this.amplify(1 / f); }
-            smooth(w) { const s = this; return new ResStream(`${s.name.split('_')[0]}_sm`, s.data, (i,_) => { let sum=0,c=0; for(let j=Math.max(0,i-w);j<=i;j++){ sum+=s.stepFn(j,s.data); c++; } return sum/c; }); }
-            reverse() { const s=this, len=s.data.length; return new ResStream(`${s.name.split('_')[0]}_rev`, s.data, (i,_) => s.stepFn((len-1-(i%len)+len)%len, s.data)); }
-            repeat(t) { const r=[]; for(let i=0;i<t;i++) r.push(...this.data); return new ResStream(`${this.name.split('_')[0]}_rep`, r); }
-            interpolate(f) { const s=this, interp=[]; for(let i=0;i<s.data.length-1;i++){ interp.push(s.data[i]); for(let j=1;j<f;j++){ const t=j/f; interp.push(s.data[i]*(1-t)+s.data[i+1]*t); } } interp.push(s.data[s.data.length-1]); return new ResStream(`${s.name.split('_')[0]}_int`, interp); }
-            quantize(l) { const s=this, minVal=Math.min(...s.data), maxVal=Math.max(...s.data), step=(maxVal-minVal)/l; return new ResStream(`${s.name.split('_')[0]}_q`, s.data, (i,_) => { const val=s.stepFn(i,s.data); return minVal+Math.floor((val-minVal)/step)*step+step/2; }); }
-            diff() { const s=this; let prev=s.stepFn(0,s.data); return new ResStream(`${s.name.split('_')[0]}_diff`, s.data, (i,_) => { const curr=s.stepFn(i,s.data); const delta=curr-prev; prev=curr; return delta; }); }
-            integrate() { const s=this; let sum=0; return new ResStream(`${s.name.split('_')[0]}_intg`, s.data, (i,_) => { sum+=s.stepFn(i,s.data); return sum; }); }
-            normalize() { const s=this; const maxVal=Math.max(...s.data.map((_,i)=>Math.abs(s.stepFn(i,s.data)))); if(maxVal===0) return s; return new ResStream(`${s.name.split('_')[0]}_norm`, s.data, (i,_)=>s.stepFn(i,s.data)/maxVal); }
-            mix(o,w=0.5) { const s=this; return new ResStream(`${s.name.split('_')[0]}_mix`, s.data, (i,_)=>s.stepFn(i,s.data)*w+o.stepFn(i,o.data)*(1-w)); }
-            interleave(o) { const s=this; let turn=0; return new ResStream(`${s.name.split('_')[0]}_ilv`, s.data, (i,_)=>{ const val=turn===0?s.stepFn(i,s.data):o.stepFn(i,o.data); turn=1-turn; return val; }); }
+            smooth(w) { const s = this; return new ResStream(`${s.name}_sm`, s.data, (i,_) => { let sum=0,c=0; for(let j=Math.max(0,i-w);j<=i;j++){ sum+=s.stepFn(j,s.data); c++; } return sum/c; }); }
+            reverse() { const s=this, len=s.data.length; return new ResStream(`${s.name}_rev`, s.data, (i,_) => s.stepFn((len-1-(i%len)+len)%len, s.data)); }
+            repeat(t) { const r=[]; for(let i=0;i<t;i++) r.push(...this.data); return new ResStream(`${this.name}_rep`, r); }
+            interpolate(f) { const s=this, interp=[]; for(let i=0;i<s.data.length-1;i++){ interp.push(s.data[i]); for(let j=1;j<f;j++){ const t=j/f; interp.push(s.data[i]*(1-t)+s.data[i+1]*t); } } interp.push(s.data[s.data.length-1]); return new ResStream(`${s.name}_int`, interp); }
+            quantize(l) { const s=this, minVal=Math.min(...s.data), maxVal=Math.max(...s.data), step=(maxVal-minVal)/l; return new ResStream(`${s.name}_q`, s.data, (i,_) => { const val=s.stepFn(i,s.data); return minVal+Math.floor((val-minVal)/step)*step+step/2; }); }
+            diff() { const s=this; let prev=s.stepFn(0,s.data); return new ResStream(`${s.name}_diff`, s.data, (i,_) => { const curr=s.stepFn(i,s.data); const delta=curr-prev; prev=curr; return delta; }); }
+            integrate() { const s=this; let sum=0; return new ResStream(`${s.name}_intg`, s.data, (i,_) => { sum+=s.stepFn(i,s.data); return sum; }); }
+            normalize() { const s=this; const maxVal=Math.max(...s.data.map((_,i)=>Math.abs(s.stepFn(i,s.data)))); if(maxVal===0) return s; return new ResStream(`${s.name}_norm`, s.data, (i,_)=>s.stepFn(i,s.data)/maxVal); }
+            mix(o, w=0.5) { const s=this; return new ResStream(`${s.name}_mix`, s.data, (i,_)=>s.stepFn(i,s.data)*w+o.stepFn(i,o.data)*(1-w)); }
+            interleave(o) { const s=this; let turn=0; return new ResStream(`${s.name}_ilv`, s.data, (i,_)=>{ const val=turn===0?s.stepFn(i,s.data):o.stepFn(i,o.data); turn=1-turn; return val; }); }
         }
         
-        const targetStreams = {
-            sine: new ResStream('sine', Array.from({length:100}, (_,i)=>Math.sin(i*0.1)*50)),
-            triangle: new ResStream('triangle', Array.from({length:100}, (_,i)=>{ const t=(i%40)/20; return t<1?t*50:(2-t)*50; })),
-            square: new ResStream('square', Array.from({length:100}, (_,i)=>Math.floor(i/20)%2===0?50:-50))
-        };
+        // Helper sine stream for mixing
+        const sineStream = new ResStream('sine', Array.from({length:200}, (_,i)=>Math.sin(i*0.1)*100));
         
         // ============================================
         // Waveform Visualizer
@@ -207,31 +219,33 @@
         }
         
         // ============================================
-        // Sound Synthesizer
+        // Audio Synthesizer (Linear)
         // ============================================
-        class SoundSynthesizer {
-            constructor() { this.audioContext=null; this.source=null; this.isPlaying=false; }
-            
-            async init() { if(!this.audioContext) this.audioContext=new (window.AudioContext||window.webkitAudioContext)(); return this.audioContext; }
-            
-            async play(stream, speed=1.0) {
+        class LinearSynth {
+            constructor() { this.ctx=null; this.source=null; this.isPlaying=false; }
+            async init() { if(!this.ctx) this.ctx=new (window.AudioContext||window.webkitAudioContext)(); return this.ctx; }
+            async play(stream, gain=0.5, speed=1.0, warp=0.0, attackMs=10) {
                 await this.stop();
                 const ctx=await this.init();
                 const data=stream.getAll();
                 if(data.length<2) return;
-                
-                const duration=2.0; const sampleRate=ctx.sampleRate;
+                const duration=3.0; const sampleRate=ctx.sampleRate;
                 const totalSamples=Math.floor(duration*sampleRate);
                 const buffer=ctx.createBuffer(1, totalSamples, sampleRate);
                 const channel=buffer.getChannelData(0);
-                
-                const normalized=data.map(v=>Math.max(-1,Math.min(1,v/256)));
+                const maxVal=Math.max(...data.map(Math.abs),0.01);
+                const normalized=data.map(v=>Math.max(-0.99,Math.min(0.99,v/maxVal)));
+                const attackSamples=Math.floor(attackMs/1000*sampleRate);
                 for(let i=0;i<totalSamples;i++){
-                    const t=i/sampleRate; const idx=Math.floor(t*speed*data.length/duration);
-                    if(idx>=0 && idx<normalized.length) channel[i]=normalized[idx];
-                    else channel[i]=0;
+                    let t=i/sampleRate;
+                    let idx=Math.floor(t*speed*data.length/duration);
+                    if(idx>=0 && idx<normalized.length){
+                        let val=normalized[idx];
+                        if(warp>0) val=Math.sin(val*Math.PI*warp)*Math.sign(val);
+                        if(i<attackSamples) val=val*(i/attackSamples);
+                        channel[i]=val*gain;
+                    } else channel[i]=0;
                 }
-                
                 this.source=ctx.createBufferSource();
                 this.source.buffer=buffer;
                 this.source.connect(ctx.destination);
@@ -239,41 +253,25 @@
                 this.isPlaying=true;
                 this.source.onended=()=>{ this.isPlaying=false; this.source=null; };
             }
-            
-            async stop() { if(this.source){ try{ this.source.stop(); }catch(e){} this.source=null; } if(this.audioContext) this.isPlaying=false; }
+            async stop() { if(this.source){ try{ this.source.stop(); }catch(e){} this.source=null; } this.isPlaying=false; }
         }
         
         // ============================================
-        // Inference Rating Engine
+        // Inference Rating
         // ============================================
         class InferenceRating {
-            compute(stream, chainLength, productive) {
-                // Productivity Score (0-100)
-                const productivity = productive ? 100 : Math.min(100, Math.max(0, 60 + (stream.name.includes('amp')?10:0) + (stream.name.includes('sm')?5:0)));
-                
-                // Complexity Score (based on chain length, max 20 ops)
-                const complexity = Math.min(100, (chainLength / 15) * 100);
-                
-                // Information Density (entropy of waveform)
+            compute(stream, chainLength, productive){
+                const productivity=productive?100:Math.min(100,60+(chainLength*5));
+                const complexity=Math.min(100, (chainLength/12)*100);
                 const data=stream.getAll();
                 const freq={}; let entropy=0;
-                for(const v of data) freq[v]= (freq[v]||0)+1;
+                for(const v of data) freq[v]=(freq[v]||0)+1;
                 for(const c of Object.values(freq)){ const p=c/data.length; entropy-=p*Math.log2(p); }
                 const maxEntropy=Math.log2(data.length);
-                const information = maxEntropy>0 ? Math.min(100, (entropy/maxEntropy)*100) : 0;
-                
-                // Spectral Richness (zero crossings + variety)
-                let zeroCross=0;
-                for(let i=1;i<data.length;i++) if((data[i-1]>=0)!==(data[i]>=0)) zeroCross++;
-                const uniqueVals=new Set(data).size;
-                const spectral = Math.min(100, (zeroCross/data.length*50 + uniqueVals/20*50));
-                
-                // Total Score (weighted average)
-                const total = (productivity*0.35 + complexity*0.15 + information*0.25 + spectral*0.25);
-                
-                return { productivity, complexity, information, spectral, total };
+                const information=maxEntropy>0?Math.min(100,(entropy/maxEntropy)*100):0;
+                const total=productivity*0.4+complexity*0.2+information*0.4;
+                return {productivity,complexity,information,total};
             }
-            
             updateUI(scores){
                 document.getElementById('prodFill').style.width=`${scores.productivity}%`;
                 document.getElementById('prodScore').innerText=`${Math.round(scores.productivity)}%`;
@@ -281,13 +279,10 @@
                 document.getElementById('compScore').innerText=`${Math.round(scores.complexity)}%`;
                 document.getElementById('infoFill').style.width=`${scores.information}%`;
                 document.getElementById('infoScore').innerText=`${Math.round(scores.information)}%`;
-                document.getElementById('specFill').style.width=`${scores.spectral}%`;
-                document.getElementById('specScore').innerText=`${Math.round(scores.spectral)}%`;
-                document.getElementById('totalScore').innerHTML=`Resolutive Score: ${Math.round(scores.total)}%`;
                 const totalElem=document.getElementById('totalScore');
-                if(scores.total>=70) totalElem.style.color='var(--score-high)';
-                else if(scores.total>=40) totalElem.style.color='var(--score-mid)';
-                else totalElem.style.color='var(--score-low)';
+                const total=Math.round(scores.total);
+                totalElem.innerText=`${total}%`;
+                totalElem.style.color=total>=70?'var(--accent-2)':total>=40?'var(--accent-3)':'var(--accent-4)';
             }
         }
         
@@ -303,115 +298,111 @@
                     this.index=JSON.parse(decompressed);
                     const mr=await fetch(this.basePath+'manifest.json'); if(mr.ok) this.manifest=await mr.json();
                     return true;
-                }catch(e){ console.warn('OEIS not available',e); this.index={A000027:{n:'Natural',t:20},A000045:{n:'Fibonacci',t:20},A000079:{n:'Powers of 2',t:16}}; return false; }
-            }
-            getFallbackSequence(id){
-                const fb={'A000027':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],'A000045':[0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181],'A000079':[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768]};
-                if(fb[id]) return {data:fb[id],name:id}; throw new Error(`Sequence ${id} not available`);
+                }catch(e){ this.index={A000027:{n:'Natural',t:20},A000045:{n:'Fibonacci',t:20},A000079:{n:'Powers of 2',t:16}}; return false; }
             }
             async loadSequence(id){
-                const normId=id.toUpperCase(); const chunkNum=this.getIdChunk(normId);
-                if(chunkNum!==null && !this.chunkCache.has(chunkNum)) await this.loadChunk(chunkNum);
-                const chunk=this.chunkCache.get(chunkNum);
-                if(chunk && chunk[normId]) return {data:chunk[normId].d,name:chunk[normId].n};
+                const normId=id.toUpperCase();
+                if(this.index && this.index[normId]) return {data:this.getFallbackData(normId),name:this.index[normId]?.n||normId};
                 return this.getFallbackSequence(normId);
             }
-            getIdChunk(id){ if(!this.index||!this.manifest) return null; const ids=Object.keys(this.index); const idx=ids.indexOf(id); if(idx===-1) return null; return Math.floor(idx/this.manifest.chunkSize); }
-            async loadChunk(cn){ try{ const resp=await fetch(`${this.basePath}chunk_${cn}.json.gz`); const blob=await resp.blob(); const decompressed=await this.decompressGzip(blob); this.chunkCache.set(cn,JSON.parse(decompressed)); }catch(e){} }
+            getFallbackData(id){ const fb={'A000027':[1,2,3,4,5,6,7,8,9,10],'A000045':[0,1,1,2,3,5,8,13,21,34],'A000079':[1,2,4,8,16,32,64,128,256,512]}; return fb[id]||fb.A000027; }
+            getFallbackSequence(id){ return {data:this.getFallbackData(id),name:id}; }
         }
         
         const InputConverters = {
-            async audioToSequence(file){ return new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=async(e)=>{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const buf=await ctx.decodeAudioData(e.target.result); const data=buf.getChannelData(0); const step=Math.max(1,Math.floor(data.length/200)); const seq=[]; for(let i=0;i<data.length&&seq.length<200;i+=step) seq.push(data[i]*100); resolve(seq); }; reader.onerror=reject; reader.readAsArrayBuffer(file); }); },
-            async imageToSequence(file){ return new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=(e)=>{ const img=new Image(); img.onload=()=>{ const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d'); canvas.width=200; canvas.height=1; ctx.drawImage(img,0,0,200,1); const id=ctx.getImageData(0,0,200,1); const seq=[]; for(let i=0;i<200;i++) seq.push((id.data[i*4]+id.data[i*4+1]+id.data[i*4+2])/3); resolve(seq); }; img.onerror=reject; img.src=e.target.result; }; reader.onerror=reject; reader.readAsDataURL(file); }); },
-            textToSequence(text){ const seq=[]; for(let i=0;i<Math.min(text.length,200);i++) seq.push(text.charCodeAt(i)); return seq; },
-            manualToSequence(str){ return str.split(',').map(n=>parseFloat(n.trim())).filter(n=>!isNaN(n)); }
+            async audioToSequence(file){
+                return new Promise((resolve,reject)=>{ const reader=new FileReader();
+                reader.onload=async(e)=>{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const buf=await ctx.decodeAudioData(e.target.result); const data=buf.getChannelData(0); const step=Math.max(1,Math.floor(data.length/200)); const seq=[]; for(let i=0;i<data.length&&seq.length<200;i+=step) seq.push(data[i]*100); resolve(seq); };
+                reader.onerror=reject; reader.readAsArrayBuffer(file); });
+            },
+            async imageToSequence(file){
+                return new Promise((resolve,reject)=>{ const reader=new FileReader();
+                reader.onload=(e)=>{ const img=new Image(); img.onload=()=>{ const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d'); canvas.width=200; canvas.height=1; ctx.drawImage(img,0,0,200,1); const id=ctx.getImageData(0,0,200,1); const seq=[]; for(let i=0;i<200;i++) seq.push((id.data[i*4]+id.data[i*4+1]+id.data[i*4+2])/3); resolve(seq); };
+                img.onerror=reject; img.src=e.target.result; }; reader.onerror=reject; reader.readAsDataURL(file); });
+            },
+            textOrManualToSequence(text){
+                if(text.includes(',')) return text.split(',').map(n=>parseFloat(n.trim())).filter(n=>!isNaN(n));
+                const seq=[]; for(let i=0;i<Math.min(text.length,200);i++) seq.push(text.charCodeAt(i));
+                return seq.length?seq:[65,66,67];
+            }
         };
         
         // ============================================
         // Global State
         // ============================================
-        let currentStream=null, originalData=null, operatorChain=[], animationInterval=null, currentStep=0, animationActive=false;
-        const visualizer=new WaveformVisualizer(); const synthesizer=new SoundSynthesizer(); const inference=new InferenceRating();
+        let currentStream=null, originalData=null, operatorChain=[], animInterval=null, currentStep=0, animActive=false;
+        const visualizer=new WaveformVisualizer(); const synth=new LinearSynth(); const inference=new InferenceRating();
         const canvas=document.getElementById('mainWaveform'); const oeisLoader=new OEISLoader('oeis/');
         
         function updateDisplay(){
             if(!currentStream) return;
-            visualizer.draw(canvas, currentStream, 120, '#6c63ff', animationActive?currentStep:-1);
+            visualizer.draw(canvas, currentStream, 120, '#6c63ff', animActive?currentStep:-1);
             const preview=currentStream.take(20);
             document.getElementById('sequencePreview').innerHTML=`[${preview.map(v=>v.toFixed(1)).join(', ')}...] (${currentStream.data.length} samples)`;
-            const nameSpan=document.getElementById('waveformName'); nameSpan.textContent=currentStream.name; nameSpan.title=currentStream.fullName||currentStream.name;
-            document.getElementById('waveformStats').innerHTML=`${currentStream.data.length}smp`;
-            const stepStr=currentStream.stepFn.toString(); const hasLambda=/=>/.test(stepStr);
-            const badge=document.getElementById('productiveBadge'); const infoDiv=document.getElementById('guardednessInfo');
-            if(hasLambda){ badge.className='productivity-badge badge-productive'; badge.innerHTML='✓ Productive'; infoDiv.innerHTML='✅ λ wrapper — operators preserve productivity'; }
-            else{ badge.className='productivity-badge badge-not-productive'; badge.innerHTML='⚠ Need λ'; infoDiv.innerHTML='⚠ Wrap in () => for productivity'; }
+            document.getElementById('waveformName').innerHTML=currentStream.name;
+            const hasLambda=/=>/.test(currentStream.stepFn.toString());
+            document.getElementById('productiveBadge').className=hasLambda?'badge badge-productive':'badge';
+            document.getElementById('productiveBadge').innerHTML=hasLambda?'✓ Productive':'⚠ Needs λ';
+            document.getElementById('guardednessInfo').innerHTML=hasLambda?'✅ λ wrapper — operators preserve productivity':'⚠ Wrap in () => for productivity';
             if(operatorChain.length>0){ document.getElementById('chainDisplay').style.display='block'; document.getElementById('chainText').innerHTML=operatorChain.join(' → '); }
             else document.getElementById('chainDisplay').style.display='none';
-            
-            // Update Inference Rating
             const scores=inference.compute(currentStream, operatorChain.length, hasLambda);
             inference.updateUI(scores);
         }
         
-        function loadNewStream(stream){ currentStream=stream; originalData=[...stream.data]; operatorChain=[]; currentStep=0; document.getElementById('stepSlider').value=0; document.getElementById('stepSlider').max=100; if(animationInterval) clearInterval(animationInterval); animationActive=false; updateDisplay(); }
+        function loadNewStream(stream){ currentStream=stream; originalData=[...stream.data]; operatorChain=[]; currentStep=0; document.getElementById('stepSlider').value=0; if(animInterval) clearInterval(animInterval); animActive=false; updateDisplay(); }
         
-        function applyOperator(op, param=null){
+        function applyOperator(op){
             if(!currentStream){ alert('Load a waveform first'); return; }
             let newStream=null, opName='';
             switch(op){
-                case'amplify':const g=param!==null?param:parseFloat(document.getElementById('gainSlider').value); newStream=currentStream.amplify(g); opName=`amp(${g.toFixed(2)})`; break;
-                case'attenuate':newStream=currentStream.attenuate(2); opName=`att(÷2)`; break;
-                case'smooth':const w=param!==null?param:parseInt(document.getElementById('smoothSlider').value); newStream=currentStream.smooth(w); opName=`smooth(w${w})`; break;
-                case'reverse':newStream=currentStream.reverse(); opName=`reverse`; break;
-                case'repeat':newStream=currentStream.repeat(2); opName=`repeat(x2)`; break;
-                case'interpolate':newStream=currentStream.interpolate(2); opName=`interp(x2)`; break;
-                case'quantize':const l=param!==null?param:parseInt(document.getElementById('quantSlider').value); newStream=currentStream.quantize(l); opName=`quant(l${l})`; break;
-                case'diff':newStream=currentStream.diff(); opName=`diff`; break;
-                case'integrate':newStream=currentStream.integrate(); opName=`integrate`; break;
-                case'normalize':newStream=currentStream.normalize(); opName=`normalize`; break;
-                case'mix':const t1=document.getElementById('targetStreamSelect').value; newStream=currentStream.mix(targetStreams[t1],0.5); opName=`mix(${t1})`; break;
-                case'interleave':const t2=document.getElementById('targetStreamSelect').value; newStream=currentStream.interleave(targetStreams[t2]); opName=`interleave(${t2})`; break;
+                case'amplify':const g=parseFloat(document.getElementById('synthGain').value)*2; newStream=currentStream.amplify(g); opName=`amp(${g.toFixed(2)})`; break;
+                case'attenuate':newStream=currentStream.attenuate(2); opName='att(÷2)'; break;
+                case'smooth':newStream=currentStream.smooth(3); opName='smooth(w3)'; break;
+                case'reverse':newStream=currentStream.reverse(); opName='reverse'; break;
+                case'repeat':newStream=currentStream.repeat(2); opName='repeat(x2)'; break;
+                case'interpolate':newStream=currentStream.interpolate(2); opName='interp(x2)'; break;
+                case'quantize':newStream=currentStream.quantize(4); opName='quant(l4)'; break;
+                case'diff':newStream=currentStream.diff(); opName='diff'; break;
+                case'integrate':newStream=currentStream.integrate(); opName='integrate'; break;
+                case'normalize':newStream=currentStream.normalize(); opName='normalize'; break;
+                case'mix':newStream=currentStream.mix(sineStream,0.5); opName='mix(sine)'; break;
+                case'interleave':newStream=currentStream.interleave(sineStream); opName='interleave(sine)'; break;
                 default:return;
             }
-            if(newStream){ currentStream=newStream; operatorChain.push(opName); currentStep=0; document.getElementById('stepSlider').value=0; if(animationInterval) clearInterval(animationInterval); animationActive=false; updateDisplay(); }
+            if(newStream){ currentStream=newStream; operatorChain.push(opName); currentStep=0; document.getElementById('stepSlider').value=0; if(animInterval) clearInterval(animInterval); animActive=false; updateDisplay(); }
         }
         
         // ============================================
         // Event Handlers
         // ============================================
-        let sliderTimeout;
-        document.getElementById('loadOeisBtn').onclick=async()=>{ const id=document.getElementById('oeisId').value.trim().toUpperCase(); if(!id) return; try{ const seqData=await oeisLoader.loadSequence(id); loadNewStream(new ResStream(`OEIS_${id}`, seqData.data)); document.getElementById('oeisStatus').innerHTML=`✅ ${id}: ${seqData.name?.slice(0,30)}`; document.getElementById('oeisStatus').style.color='var(--accent-2)'; }catch(e){ alert(`❌ ${e.message}`); } };
+        document.getElementById('loadOeisBtn').onclick=async()=>{ const id=document.getElementById('oeisId').value.trim().toUpperCase(); if(!id) return; try{ const seqData=await oeisLoader.loadSequence(id); loadNewStream(new ResStream(`OEIS_${id}`, seqData.data)); document.getElementById('oeisStatus').innerHTML=`✅ ${id} loaded`; }catch(e){ alert(e.message); } };
         document.getElementById('audioZone').onclick=()=>document.getElementById('audioFile').click();
-        document.getElementById('audioFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.audioToSequence(e.target.files[0]); loadNewStream(new ResStream('Audio', seq)); document.getElementById('audioPreview').innerHTML=`✅ ${seq.length} samples`; } };
+        document.getElementById('audioFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.audioToSequence(e.target.files[0]); loadNewStream(new ResStream('Audio', seq)); document.getElementById('audioPreview').innerHTML=`✅ ${seq.length}samples`; } };
         document.getElementById('imageZone').onclick=()=>document.getElementById('imageFile').click();
-        document.getElementById('imageFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.imageToSequence(e.target.files[0]); loadNewStream(new ResStream('Image', seq)); document.getElementById('imagePreview').innerHTML=`✅ ${seq.length} pixels`; } };
-        document.getElementById('loadTextBtn').onclick=()=>{ const text=document.getElementById('textInput').value; const seq=InputConverters.textToSequence(text); loadNewStream(new ResStream('Text', seq)); };
-        document.getElementById('loadManualBtn').onclick=()=>{ const seqStr=document.getElementById('manualSeq').value; const seq=InputConverters.manualToSequence(seqStr); if(seq.length) loadNewStream(new ResStream('Manual', seq)); };
+        document.getElementById('imageFile').onchange=async(e)=>{ if(e.target.files[0]){ const seq=await InputConverters.imageToSequence(e.target.files[0]); loadNewStream(new ResStream('Image', seq)); document.getElementById('imagePreview').innerHTML=`✅ ${seq.length}pixels`; } };
+        document.getElementById('loadTextBtn').onclick=()=>{ const text=document.getElementById('textInput').value; const seq=InputConverters.textOrManualToSequence(text); loadNewStream(new ResStream('Source', seq)); };
         document.querySelectorAll('.operator-btn').forEach(btn=>{ btn.onclick=()=>applyOperator(btn.dataset.op); });
         
-        document.getElementById('gainSlider').oninput=(e)=>{ const val=parseFloat(e.target.value); document.getElementById('gainVal').innerText=val.toFixed(2); if(currentStream&&!animationActive){ clearTimeout(sliderTimeout); sliderTimeout=setTimeout(()=>applyOperator('amplify',val),100); } };
-        document.getElementById('smoothSlider').oninput=(e)=>{ const val=parseInt(e.target.value); document.getElementById('smoothVal').innerText=val; if(currentStream&&!animationActive){ clearTimeout(sliderTimeout); sliderTimeout=setTimeout(()=>applyOperator('smooth',val),100); } };
-        document.getElementById('quantSlider').oninput=(e)=>{ const val=parseInt(e.target.value); document.getElementById('quantVal').innerText=val; if(currentStream&&!animationActive){ clearTimeout(sliderTimeout); sliderTimeout=setTimeout(()=>applyOperator('quantize',val),100); } };
+        document.getElementById('playAnimBtn').onclick=()=>{ if(animInterval) clearInterval(animInterval); animActive=true; let step=0; animInterval=setInterval(()=>{ if(step<120){ currentStep=step; document.getElementById('stepSlider').value=step; document.getElementById('stepValue').innerText=step; visualizer.draw(canvas,currentStream,120,'#6c63ff',step); step++; }else{ clearInterval(animInterval); animActive=false; visualizer.draw(canvas,currentStream,120,'#6c63ff',-1); } },30); };
+        document.getElementById('stopAnimBtn').onclick=()=>{ if(animInterval) clearInterval(animInterval); animActive=false; visualizer.draw(canvas,currentStream,120,'#6c63ff',-1); };
+        document.getElementById('stepSlider').oninput=(e)=>{ currentStep=parseInt(e.target.value); document.getElementById('stepValue').innerText=currentStep; if(!animActive) visualizer.draw(canvas,currentStream,120,'#6c63ff',currentStep); };
         
-        document.getElementById('playWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=true; let step=0; animationInterval=setInterval(()=>{ if(step<120){ currentStep=step; document.getElementById('stepSlider').value=step; document.getElementById('stepValue').innerText=step; visualizer.draw(canvas,currentStream,120,'#6c63ff',step); step++; }else{ clearInterval(animationInterval); animationActive=false; visualizer.draw(canvas,currentStream,120,'#6c63ff',-1); } },25); };
-        document.getElementById('stopWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=false; visualizer.draw(canvas,currentStream,120,'#6c63ff',-1); };
-        document.getElementById('resetWaveform').onclick=()=>{ if(animationInterval) clearInterval(animationInterval); animationActive=false; currentStep=0; document.getElementById('stepSlider').value=0; document.getElementById('stepValue').innerText='0'; visualizer.draw(canvas,currentStream,120,'#6c63ff',-1); };
-        document.getElementById('stepSlider').oninput=(e)=>{ currentStep=parseInt(e.target.value); document.getElementById('stepValue').innerText=currentStep; if(!animationActive) visualizer.draw(canvas,currentStream,120,'#6c63ff',currentStep); };
+        document.getElementById('playSoundBtn').onclick=async()=>{ if(currentStream) await synth.play(currentStream, parseFloat(document.getElementById('synthGain').value), parseFloat(document.getElementById('synthSpeed').value), parseFloat(document.getElementById('warpSlider').value), parseFloat(document.getElementById('attackSlider').value)); };
+        document.getElementById('stopSoundBtn').onclick=async()=>{ await synth.stop(); };
+        document.getElementById('synthGain').oninput=(e)=>{ document.getElementById('gainVal').innerText=parseFloat(e.target.value).toFixed(2); };
+        document.getElementById('synthSpeed').oninput=(e)=>{ document.getElementById('speedVal').innerText=parseFloat(e.target.value).toFixed(2); };
+        document.getElementById('warpSlider').oninput=(e)=>{ document.getElementById('warpVal').innerText=parseFloat(e.target.value).toFixed(2); };
+        document.getElementById('attackSlider').oninput=(e)=>{ document.getElementById('attackVal').innerText=e.target.value; };
         
-        // Sound Controls
-        document.getElementById('playSoundBtn').onclick=async()=>{ if(currentStream) await synthesizer.play(currentStream, parseFloat(document.getElementById('soundSpeed').value)); };
-        document.getElementById('stopSoundBtn').onclick=async()=>{ await synthesizer.stop(); };
-        document.getElementById('soundSpeed').oninput=(e)=>{ document.getElementById('speedVal').innerText=e.target.value; };
-        
-        document.getElementById('resetChainBtn').onclick=()=>{ if(originalData){ const origName=currentStream.fullName?.split('_')[0]||'restored'; loadNewStream(new ResStream(origName, originalData)); } };
-        document.getElementById('exportJson').onclick=()=>{ if(!currentStream) return; const d={name:currentStream.fullName||currentStream.name,data:currentStream.getAll(),chain:operatorChain,timestamp:new Date().toISOString()}; const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`waveform_${Date.now()}.json`; a.click(); URL.revokeObjectURL(u); };
+        document.getElementById('resetChainBtn').onclick=()=>{ if(originalData) loadNewStream(new ResStream(originalData.name||'reset', originalData)); };
+        document.getElementById('exportJson').onclick=()=>{ if(!currentStream) return; const d={name:currentStream.fullName,data:currentStream.getAll(),chain:operatorChain}; const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`waveform_${Date.now()}.json`; a.click(); URL.revokeObjectURL(u); };
         document.getElementById('exportCsv').onclick=()=>{ if(!currentStream) return; const data=currentStream.getAll(); const csv=data.map((v,i)=>`${i},${v}`).join('\n'); const b=new Blob([csv],{type:'text/csv'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`waveform_${Date.now()}.csv`; a.click(); URL.revokeObjectURL(u); };
-        document.getElementById('exportStreamBtn').onclick=()=>{ if(!currentStream) return; const code=`// Resolutive Stream\n// Chain: ${operatorChain.join(' → ')||'none'}\n// Score: ${document.getElementById('totalScore').innerText}\nconst stream = {\n    name: "${currentStream.fullName||currentStream.name}",\n    data: [${currentStream.getAll().slice(0,15).join(', ')}${currentStream.getAll().length>15?', ...':''}],\n    length: ${currentStream.getAll().length}\n};`; const b=new Blob([code],{type:'text/javascript'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`stream_${Date.now()}.js`; a.click(); URL.revokeObjectURL(u); };
+        document.getElementById('exportStreamBtn').onclick=()=>{ if(!currentStream) return; const code=`// Resolutive Stream\n// Chain: ${operatorChain.join(' → ')||'none'}\nconst stream = { name: "${currentStream.fullName||currentStream.name}", data: [${currentStream.getAll().slice(0,15).join(', ')}${currentStream.getAll().length>15?', ...':''}], length: ${currentStream.getAll().length} };`; const b=new Blob([code],{type:'text/javascript'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`stream_${Date.now()}.js`; a.click(); URL.revokeObjectURL(u); };
         
-        async function initOEIS(){ const status=document.getElementById('oeisStatus'); status.innerHTML='📦 Loading OEIS...'; const loaded=await oeisLoader.loadIndex(); if(loaded){ const cnt=Object.keys(oeisLoader.index).length; status.innerHTML=`✅ OEIS ready: ${cnt.toLocaleString()} seqs`; status.style.color='var(--accent-2)'; }else{ status.innerHTML='⚠️ Using built-in sequences'; status.style.color='var(--accent-4)'; } }
+        async function initOEIS(){ const status=document.getElementById('oeisStatus'); status.innerHTML='📦 Loading...'; const loaded=await oeisLoader.loadIndex(); status.innerHTML=loaded?'✅ OEIS ready':'⚠️ Built-in only'; }
         initOEIS();
-        
-        setTimeout(()=>{ loadNewStream(new ResStream('OEIS_A000079', [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768])); },100);
+        setTimeout(()=>{ loadNewStream(new ResStream('OEIS_A000079', [1,2,4,8,16,32,64,128,256,512])); },100);
     </script>
 </body>
 </html>
