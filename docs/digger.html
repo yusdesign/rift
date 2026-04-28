@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolutive Coinduction Explorer | Cluster Mining · OEIS · Bisimilarity Classes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --text-primary: #e2e2e2;
+            --text-secondary: #a0a0b0;
+            --accent-success: #00d4aa;
+            --accent-error: #ff6b6b;
+            --accent-warning: #ffd93d;
+            --accent-info: #6c63ff;
+            --border: #2a2a3a;
+            --slider-track: #94a3b8;
+            --slider-fill: var(--accent-info);
+            --cluster-1: #6c63ff;
+            --cluster-2: #00d4aa;
+            --cluster-3: #ffd93d;
+            --cluster-4: #ff6b6b;
+            --cluster-5: #c084fc;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.5; }
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 0.6rem 1.2rem; }
+        .header h1 { font-size: 1.3rem; color: var(--accent-info); display: inline-block; }
+        .header .subtitle { color: var(--text-secondary); margin-top: 0.15rem; font-size: 0.7rem; }
+        
+        .app-container { display: grid; grid-template-columns: 350px 1fr 400px; gap: 0.6rem; padding: 0.75rem; min-height: calc(100vh - 75px); }
+        .panel { background: var(--bg-secondary); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; }
+        .panel-header { background: var(--bg-tertiary); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+        .panel-content { padding: 0.6rem; flex: 1; overflow-y: auto; max-height: calc(100vh - 120px); }
+        
+        .btn { padding: 0.3rem 0.6rem; border: 1px solid var(--border); background: var(--bg-tertiary); cursor: pointer; font-weight: 500; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.3rem; color: var(--text-primary); }
+        .btn-primary { background: var(--accent-info); border-color: var(--accent-info); color: white; }
+        .btn-primary:hover { filter: brightness(0.9); }
+        .btn-success { background: var(--accent-success); border-color: var(--accent-success); color: #0f0f1a; }
+        
+        .stream-card { background: var(--bg-tertiary); border-left: 3px solid var(--accent-info); padding: 0.35rem 0.5rem; margin-bottom: 0.35rem; cursor: pointer; transition: all 0.1s; }
+        .stream-card:hover { transform: translateX(3px); background: rgba(108, 99, 255, 0.1); }
+        .stream-card.selected { border-left-color: var(--accent-success); background: rgba(0,212,170,0.1); }
+        .step-badge { background: var(--bg-primary); padding: 0.1rem 0.35rem; font-size: 0.55rem; display: inline-block; margin-bottom: 0.2rem; }
+        .value-display { font-size: 0.75rem; font-weight: 500; }
+        .value-display code { background: var(--bg-primary); padding: 0.1rem 0.25rem; font-size: 0.7rem; }
+        
+        canvas.waveform { width: 100%; height: 70px; background: #0a0a0f; display: block; margin: 0.25rem 0; }
+        .controls { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; margin: 0.4rem 0; }
+        
+        select, input { background: var(--bg-tertiary); border: 1px solid var(--border); padding: 0.25rem 0.4rem; color: var(--text-primary); width: 100%; margin-bottom: 0.35rem; font-size: 0.7rem; }
+        
+        /* Guard Level Slider */
+        .guard-slider-container { margin: 0.5rem 0; }
+        .generator-input {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            cursor: pointer;
+        }
+        .generator-input::-webkit-slider-runnable-track {
+            height: 2px;
+            background: linear-gradient(to right, var(--slider-fill) var(--range-pct, 0%), var(--slider-track) var(--range-pct, 0%));
+            border-radius: 0px;
+            border: none;
+        }
+        .generator-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            background: var(--slider-fill);
+            border-radius: 0px;
+            border: none;
+            margin-top: -5px;
+            cursor: pointer;
+        }
+        .tooltip { position: relative; display: inline-block; cursor: help; }
+        .tooltip .tooltiptext { visibility: hidden; width: 180px; background: var(--bg-primary); color: var(--text-primary); text-align: center; border: 1px solid var(--border); padding: 0.2rem; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -90px; font-size: 0.6rem; }
+        .tooltip:hover .tooltiptext { visibility: visible; }
+        
+        /* Cluster Visualization */
+        .cluster-container { background: var(--bg-tertiary); padding: 0.4rem; margin-bottom: 0.4rem; border-left: 3px solid; cursor: pointer; }
+        .cluster-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; }
+        .cluster-size { font-size: 0.55rem; color: var(--text-secondary); }
+        .cluster-members { font-size: 0.55rem; margin-top: 0.2rem; padding-left: 0.5rem; display: none; }
+        .cluster-container.expanded .cluster-members { display: block; }
+        .cluster-tag { display: inline-block; padding: 0.1rem 0.3rem; font-size: 0.5rem; margin: 0.1rem; background: var(--bg-primary); border-radius: 0px; cursor: pointer; }
+        .cluster-tag:hover { background: var(--accent-info); }
+        
+        .inference-results-container { max-height: 300px; overflow-y: auto; margin-top: 0.5rem; }
+        .inference-result { background: var(--bg-tertiary); padding: 0.4rem; margin-bottom: 0.4rem; border-left: 3px solid var(--accent-info); cursor: pointer; }
+        .inference-result:hover { transform: translateX(2px); background: rgba(108,99,255,0.1); }
+        .classification-badge { display: inline-block; padding: 0.1rem 0.3rem; font-size: 0.55rem; margin: 0.15rem; }
+        .badge-nature { background: rgba(0, 212, 170, 0.2); color: var(--accent-success); }
+        .badge-tech { background: rgba(108, 99, 255, 0.2); color: var(--accent-info); }
+        .badge-society { background: rgba(255, 217, 61, 0.2); color: var(--accent-warning); }
+        .badge-art { background: rgba(255, 107, 107, 0.2); color: var(--accent-error); }
+        
+        .similarity-bar { height: 4px; background: var(--bg-primary); margin: 0.2rem 0; }
+        .similarity-fill { height: 100%; background: var(--accent-success); width: 0%; }
+        
+        .context-search { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+        .context-search input { flex: 1; margin: 0; }
+        
+        .method-tree { background: var(--bg-tertiary); padding: 0.5rem; font-size: 0.65rem; margin-top: 0.5rem; }
+        .tree-node { margin-left: 0.8rem; position: relative; }
+        .tree-node::before { content: '├─'; position: absolute; left: -0.7rem; color: var(--accent-info); }
+        
+        @media (max-width: 1100px) { .app-container { grid-template-columns: 1fr; gap: 0.6rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Resolutive Coinduction Explorer</h1>
+        <div class="subtitle">Cluster Mining · Bisimilarity Classes · OEIS Corpus · Research Tool</div>
+    </div>
+
+    <div class="app-container">
+        <!-- LEFT: Stream Sources -->
+        <div class="panel">
+            <div class="panel-header"><span>📝 Stream Sources</span><button class="btn" id="loadExampleBtn">📚 Example</button></div>
+            <div class="panel-content">
+                <textarea id="streamEditor" rows="4" style="width:100%; background:#0a0a0f; border:1px solid var(--border); color:white; padding:0.4rem; font-family:monospace; font-size:0.7rem;"></textarea>
+                <div class="controls" style="margin-top:0.3rem;">
+                    <button class="btn btn-primary" id="runStreamsBtn">▶ Run</button>
+                    <button class="btn" id="clearStreamsBtn">🗑 Clear</button>
+                </div>
+                <div style="display:flex; gap:0.3rem; margin-top:0.3rem;">
+                    <input type="text" id="oeisId" placeholder="OEIS ID (A000045)" list="oeisSuggestions" style="margin:0; flex:1;">
+                    <datalist id="oeisSuggestions">
+                        <option value="A000027">Natural numbers</option><option value="A000045">Fibonacci</option>
+                        <option value="A000079">Powers of 2</option><option value="A000142">Factorials</option>
+                        <option value="A000217">Triangular</option><option value="A000290">Squares</option>
+                        <option value="A000040">Primes</option>
+                    </datalist>
+                    <button class="btn" id="fetchOeisBtn">🔢 Fetch</button>
+                </div>
+                <div id="streamList" style="margin-top:0.4rem;"></div>
+            </div>
+        </div>
+
+        <!-- MIDDLE: Waveform Studio -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🎵 Waveform Studio</span>
+                <div class="tooltip"><span class="tooltiptext">Guard level affects productivity scoring</span>
+                    <div class="guard-slider-container" style="width:150px;">
+                        <input type="range" id="guardSlider" class="generator-input" min="0" max="3" step="1" value="1">
+                        <div style="display:flex; justify-content:space-between; font-size:0.55rem; margin-top:0.1rem;">
+                            <span>🔒</span><span>⚖️</span><span>🌀</span><span>🔓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-content">
+                <select id="waveformSelect"><option value="">Select stream to visualize</option></select>
+                <canvas id="waveformCanvas" class="waveform" width="400" height="70"></canvas>
+                <div class="controls">
+                    <button id="playBtn" class="btn">▶</button><button id="stopBtn" class="btn">⏸</button>
+                    <button id="resetBtn" class="btn">↺</button>
+                    <input type="range" id="stepSlider" class="generator-input" min="0" max="100" value="0" style="flex:1;">
+                    <span id="stepValue" style="font-size:0.6rem; width:30px;">0</span>
+                </div>
+                <div id="sequencePreview" style="font-size:0.6rem; background:var(--bg-primary); padding:0.25rem; overflow-x:auto;"></div>
+                
+                <div style="margin-top:0.5rem;"><strong>🔍 Bisimulation</strong></div>
+                <select id="leftStreamSelect"><option value="">Left Stream</option></select>
+                <select id="rightStreamSelect"><option value="">Right Stream</option></select>
+                <button class="btn btn-primary" id="compareBtn" style="width:100%; margin-top:0.2rem;">🔗 Compare</button>
+                <div id="comparisonResult" style="margin-top:0.3rem;"></div>
+                <div id="guardednessResult" style="font-size:0.65rem; margin-top:0.3rem; padding:0.25rem; background:var(--bg-tertiary);"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Cluster Mining & Inference -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>⛏️ Cluster Mining · Research Tool</span>
+                <button class="btn btn-primary" id="mineClustersBtn">⛏️ Mine Clusters</button>
+            </div>
+            <div class="panel-content">
+                <!-- Mining Parameters -->
+                <div style="display:flex; gap:0.3rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                    <input type="number" id="clusterDepth" value="15" style="width:70px;" placeholder="steps">
+                    <input type="number" id="minClusterSize" value="2" style="width:70px;" placeholder="min size">
+                    <select id="clusterDomain" style="width:100px;">
+                        <option value="all">All domains</option>
+                        <option value="nature">🌿 Nature</option>
+                        <option value="tech">💻 Tech</option>
+                        <option value="art">🎨 Art</option>
+                    </select>
+                </div>
+                
+                <!-- Cluster Visualization -->
+                <div id="clustersContainer" class="inference-results-container"></div>
+                
+                <!-- Separator -->
+                <div style="margin:0.5rem 0; border-top:1px solid var(--border);"></div>
+                
+                <!-- Traditional Search (kept for compatibility) -->
+                <div style="display:flex; gap:0.3rem;">
+                    <select id="searchMode" style="flex:2;">
+                        <option value="bisimilar">🔗 Bisimilar Pairs</option>
+                        <option value="similarity">📊 Similarity Search</option>
+                        <option value="guarded">🛡️ Well-Guarded</option>
+                        <option value="divergent">⚠️ Divergent Pairs</option>
+                    </select>
+                    <input type="number" id="searchDepth" value="20" style="width:65px;" placeholder="steps">
+                    <button class="btn" id="runInferenceBtn">Search</button>
+                </div>
+                
+                <!-- Similarity Target -->
+                <div id="similarityTargetDiv" style="display:none; margin-top:0.3rem;">
+                    <select id="similarityTarget">
+                        <option value="">Select target sequence</option>
+                        <option value="A000027">A000027 - Natural numbers</option>
+                        <option value="A000045">A000045 - Fibonacci</option>
+                        <option value="A000079">A000079 - Powers of 2</option>
+                        <option value="A000142">A000142 - Factorials</option>
+                        <option value="A000217">A000217 - Triangular</option>
+                    </select>
+                </div>
+                
+                <!-- Contextual Search -->
+                <div class="context-search">
+                    <input type="text" id="contextPrompt" placeholder="Ask: 'sequences for music' or 'growth patterns'">
+                    <button class="btn" id="contextSearchBtn">🔍 Context</button>
+                </div>
+                
+                <!-- Guard Level Display -->
+                <div id="guardLevelDisplay" style="font-size:0.6rem; margin:0.3rem 0; padding:0.2rem; background:var(--bg-tertiary); text-align:center;"></div>
+                
+                <!-- Search Results -->
+                <div id="inferenceResults" class="inference-results-container"></div>
+                
+                <div id="methodTree" class="method-tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Helper Functions
+        // ============================================
+        function initSlider(slider) {
+            const handleInput = (el) => {
+                const min = parseFloat(el.min) || 0;
+                const max = parseFloat(el.max) || 100;
+                const val = parseFloat(el.value);
+                const pct = (val - min) / (max - min) * 100;
+                el.style.setProperty('--range-pct', pct + '%');
+            };
+            slider.addEventListener('input', (e) => handleInput(e.target));
+            handleInput(slider);
+        }
+        
+        // ============================================
+        // Core Classes
+        // ============================================
+        class ResStream {
+            constructor(name, seed, stepFn) { this.name = name; this.seed = seed; this.stepFn = stepFn; this.cache = new Map(); }
+            step(s) { if (!this.cache.has(s)) this.cache.set(s, this.stepFn(s)); return this.cache.get(s); }
+            take(n) { const r = []; let s = this.seed; for (let i=0;i<n;i++) { const [v,nxt]=this.step(s); r.push(v); s=nxt; } return r; }
+        }
+        
+        class GuardednessChecker {
+            constructor() { 
+                this.levels = ['STRICT', 'MODERATE', 'LAX', 'MINIMAL'];
+                this.levelNames = ['🔒 Strict', '⚖️ Moderate', '🌀 Lax', '🔓 Minimal'];
+                this.thresholds = [80, 60, 40, 20];
+                this.currentIdx = 1;
+            }
+            setLevel(idx) { if(idx>=0 && idx<4){ this.currentIdx = idx; return true; } return false; }
+            checkStream(stream, levelIdx=null) {
+                const idx = (levelIdx !== null) ? levelIdx : this.currentIdx;
+                const threshold = this.thresholds[idx];
+                const stepStr = stream.stepFn.toString(); let score = 0;
+                const hasArrayReturn = /return\s*\[/.test(stepStr) || /=>\s*\[/.test(stepStr);
+                if(hasArrayReturn) score += 25;
+                const hasThunk = /\(\)\s*=>/.test(stepStr), hasAnyLambda = />=\s*\(?[a-zA-Z_]/;
+                if(idx === 0 && hasThunk) score += 45;
+                else if(idx === 1) { if(hasThunk) score += 45; else if(hasAnyLambda) score += 30; else score += 15; }
+                else if(idx === 2) score += 25;
+                else if(idx === 3) score += 10;
+                const hasValueBeforeRecur = /return\s*\[[^,\]]+,\s*/.test(stepStr);
+                if(hasValueBeforeRecur) score += 25;
+                try{ let seed=stream.seed; for(let i=0;i<5;i++){ const [v,n]=stream.step(seed); seed=n; } score += 10; } catch(e){}
+                return { productive: score >= threshold, score: score };
+            }
+        }
+        
+        class BisimulationProver {
+            prove(s1,s2,maxSteps=100){
+                const visited=new Set(), queue=[[s1.seed,s2.seed]];
+                while(queue.length && visited.size<maxSteps){
+                    const [seed1,seed2]=queue.shift();
+                    const key=JSON.stringify(seed1)+'|'+JSON.stringify(seed2);
+                    if(visited.has(key)) continue; visited.add(key);
+                    const [v1,n1]=s1.step(seed1), [v2,n2]=s2.step(seed2);
+                    if(v1!==v2) return { bisimilar: false, step: visited.size-1, v1, v2 };
+                    queue.push([n1,n2]);
+                }
+                return { bisimilar: true, stepsChecked: visited.size };
+            }
+        }
+        
+        class WaveformVisualizer {
+            draw(canvas, stream, steps=70, color='#6c63ff', highlight=-1){
+                const ctx=canvas.getContext('2d'); const w=canvas.clientWidth, h=canvas.clientHeight;
+                canvas.width=w; canvas.height=h;
+                const values=stream.take(steps);
+                ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,w,h);
+                if(values.length<2) return;
+                const minVal=Math.min(...values,0), maxVal=Math.max(...values,1), range=Math.max(maxVal-minVal,0.01);
+                ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=1.5;
+                for(let i=0;i<values.length;i++){
+                    const x=(i/(values.length-1))*w;
+                    const y=h-((values[i]-minVal)/range)*(h-12)-6;
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                if(highlight>=0 && highlight<values.length){
+                    const x=(highlight/(values.length-1))*w;
+                    const y=h-((values[highlight]-minVal)/range)*(h-12)-6;
+                    ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+                }
+            }
+        }
+        
+        // ============================================
+        // OEIS Data (Extended Corpus)
+        // ============================================
+        const oeisData = {
+            'A000027': { name: 'Natural numbers', data: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], domain: 'nature', signature: 'linear' },
+            'A001477': { name: 'Nonnegative integers', data: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], domain: 'nature', signature: 'linear' },
+            'A000045': { name: 'Fibonacci numbers', data: [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181], domain: 'nature', signature: 'fibonacci' },
+            'A000079': { name: 'Powers of 2', data: [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768], domain: 'tech', signature: 'exponential' },
+            'A000142': { name: 'Factorials', data: [1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800], domain: 'tech', signature: 'factorial' },
+            'A000217': { name: 'Triangular numbers', data: [0,1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190], domain: 'nature', signature: 'quadratic' },
+            'A000290': { name: 'Squares', data: [0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361], domain: 'tech', signature: 'quadratic' },
+            'A000040': { name: 'Prime numbers', data: [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71], domain: 'nature', signature: 'irregular' },
+            'A000108': { name: 'Catalan numbers', data: [1,1,2,5,14,42,132,429,1430,4862,16796,58786], domain: 'tech', signature: 'catalan' },
+            'A000034': { name: 'Periodic 1,2', data: [1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2], domain: 'art', signature: 'periodic' },
+            'A000129': { name: 'Pell numbers', data: [0,1,2,5,12,29,70,169,408,985,2378,5741,13860], domain: 'nature', signature: 'fibonacci-like' },
+            'A001519': { name: 'Odd-index Fibonacci', data: [1,2,5,13,34,89,233,610,1597,4181], domain: 'nature', signature: 'fibonacci-like' }
+        };
+        
+        function loadFromOEIS(id){
+            const seq = oeisData[id.toUpperCase()] || oeisData['A000027'];
+            const seed = { index: 0, terms: seq.data };
+            const stepFn = (s) => [s.terms[s.index % s.terms.length], { index: s.index + 1, terms: s.terms }];
+            return new ResStream(`OEIS_${id}`, seed, stepFn);
+        }
+        
+        function parseStreamsFromCode(code){
+            const result={}, cleanCode=code.replace(/\/\/.*$/gm,'');
+            const regex=/(?:const|let|var)?\s*(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
+            let match;
+            while((match=regex.exec(cleanCode))!==null){
+                const name=match[1], seedStr=match[2].trim(), params=match[3].trim(), valExpr=match[4].trim(), nextExpr=match[5].trim();
+                let seed; try{ seed=Function(`"use strict"; return (${seedStr})`)(); }catch(e){ continue; }
+                const stepFn=new Function(params,`return [${valExpr}, ${nextExpr}];`);
+                result[name]={seed,step:stepFn};
+            }
+            return result;
+        }
+        
+        // ============================================
+        // CLUSTER MINING ENGINE
+        // ============================================
+        class ClusterMiner {
+            constructor(oeisData, prover){
+                this.oeis = oeisData;
+                this.prover = prover;
+                this.clusters = null;
+            }
+            
+            mineClusters(depth=15, minSize=2, domainFilter='all'){
+                const ids = Object.keys(this.oeis).filter(id => {
+                    if(domainFilter === 'all') return true;
+                    return this.oeis[id].domain === domainFilter;
+                });
+                
+                // Build adjacency graph
+                const adjacency = new Map();
+                for(let i=0;i<ids.length;i++){
+                    for(let j=i+1;j<ids.length;j++){
+                        const s1 = loadFromOEIS(ids[i]);
+                        const s2 = loadFromOEIS(ids[j]);
+                        const result = this.prover.prove(s1, s2, depth);
+                        if(result.bisimilar){
+                            if(!adjacency.has(ids[i])) adjacency.set(ids[i], new Set());
+                            if(!adjacency.has(ids[j])) adjacency.set(ids[j], new Set());
+                            adjacency.get(ids[i]).add(ids[j]);
+                            adjacency.get(ids[j]).add(ids[i]);
+                        }
+                    }
+                }
+                
+                // Find connected components
+                const visited = new Set();
+                const clusters = [];
+                
+                for(const id of ids){
+                    if(!visited.has(id)){
+                        const cluster = [];
+                        const queue = [id];
+                        visited.add(id);
+                        
+                        while(queue.length){
+                            const current = queue.shift();
+                            cluster.push(current);
+                            const neighbors = adjacency.get(current) || new Set();
+                            for(const neighbor of neighbors){
+                                if(!visited.has(neighbor)){
+                                    visited.add(neighbor);
+                                    queue.push(neighbor);
+                                }
+                            }
+                        }
+                        
+                        if(cluster.length >= minSize){
+                            clusters.push(cluster);
+                        }
+                    }
+                }
+                
+                // Sort by size (largest first)
+                clusters.sort((a,b) => b.length - a.length);
+                this.clusters = clusters;
+                return clusters;
+            }
+            
+            getClusterSignature(cluster){
+                // Determine the dominant signature type
+                const signatures = {};
+                for(const id of cluster){
+                    const sig = this.oeis[id]?.signature || 'unknown';
+                    signatures[sig] = (signatures[sig] || 0) + 1;
+                }
+                let maxSig = 'unknown';
+                let maxCount = 0;
+                for(const [sig, count] of Object.entries(signatures)){
+                    if(count > maxCount){ maxCount = count; maxSig = sig; }
+                }
+                return maxSig;
+            }
+            
+            getClusterInsight(cluster){
+                const size = cluster.length;
+                const sig = this.getClusterSignature(cluster);
+                const names = cluster.slice(0,3).map(id => this.oeis[id]?.name || id);
+                
+                if(sig === 'linear') return `📈 Linear growth sequence — ${size} members. Use for: arithmetic progressions, counting.`;
+                if(sig === 'quadratic') return `📐 Quadratic growth — ${size} members. Use for: area calculations, spatial patterns.`;
+                if(sig === 'exponential') return `⚡ Exponential growth — ${size} members. Use for: population growth, compound interest.`;
+                if(sig === 'fibonacci' || sig === 'fibonacci-like') return `🌀 Fibonacci-like recurrence — ${size} members. Use for: golden ratio applications, rabbit problems.`;
+                if(sig === 'periodic') return `🔄 Periodic pattern — ${size} members. Use for: rhythms, oscillations, modular arithmetic.`;
+                if(sig === 'factorial') return `💥 Factorial growth — ${size} members. Use for: permutations, combinatorial explosions.`;
+                return `📊 Cluster of ${size} related sequences: ${names.join(', ')}...`;
+            }
+        }
+        
+        // ============================================
+        // Similarity Search
+        // ============================================
+        function findSimilarSequences(targetId, depth=20, minSimilarity=70){
+            const target = loadFromOEIS(targetId);
+            const targetValues = target.take(depth);
+            const results = [];
+            
+            for(const [id, seq] of Object.entries(oeisData)){
+                if(id === targetId) continue;
+                const candidate = loadFromOEIS(id);
+                const candidateValues = candidate.take(depth);
+                
+                let matchCount = 0;
+                let firstDivergence = depth;
+                for(let i=0; i<depth; i++){
+                    if(targetValues[i] === candidateValues[i]) matchCount++;
+                    else if(firstDivergence === depth) firstDivergence = i;
+                }
+                const similarity = (matchCount / depth) * 100;
+                
+                if(similarity >= minSimilarity){
+                    results.push({ id, name: seq.name, domain: seq.domain, similarity, matchCount, firstDivergence });
+                }
+            }
+            return results.sort((a,b) => b.similarity - a.similarity);
+        }
+        
+        // ============================================
+        // Classification
+        // ============================================
+        const classifier = {
+            domains: {
+                nature: { name: '🌿 Nature & Biology', color: 'badge-nature', apps: ['Population modeling', 'Biological sequences', 'Ecological forecasting'] },
+                tech: { name: '💻 Technology & Computing', color: 'badge-tech', apps: ['Algorithm benchmarking', 'Cryptography', 'Data compression'] },
+                art: { name: '🎨 Art & Music', color: 'badge-art', apps: ['Generative music', 'Visual patterns', 'Rhythm generation'] }
+            },
+            classify(id, name, data){
+                let domain = 'tech';
+                const firstFew = data.slice(0,6);
+                if(firstFew[0]===0 && firstFew[1]===1 && firstFew[2]===1) domain = 'nature';
+                else if(firstFew[0]===1 && firstFew[1]===2 && firstFew[2]===3) domain = 'nature';
+                else if(firstFew[0]===firstFew[2]) domain = 'art';
+                else if(data[5]/data[4] > 1.5) domain = 'tech';
+                return { domain: this.domains[domain], application: this.domains[domain].apps[0] };
+            }
+        };
+        
+        // ============================================
+        // Global State
+        // ============================================
+        const streams = new Map();
+        let currentStream = null;
+        let animationInterval = null;
+        let currentStep = 0;
+        
+        const checker = new GuardednessChecker();
+        const visualizer = new WaveformVisualizer();
+        const prover = new BisimulationProver();
+        const miner = new ClusterMiner(oeisData, prover);
+        
+        const canvas = document.getElementById('waveformCanvas');
+        const guardSlider = document.getElementById('guardSlider');
+        initSlider(guardSlider);
+        
+        // ============================================
+        // UI Functions
+        // ============================================
+        function updateGuardDisplay(){
+            const levelNames = ['🔒 Strict (80)', '⚖️ Moderate (60)', '🌀 Lax (40)', '🔓 Minimal (20)'];
+            document.getElementById('guardLevelDisplay').innerHTML = `🛡️ Current Guard: ${levelNames[checker.currentIdx]}`;
+            if(currentStream){
+                const check = checker.checkStream(currentStream);
+                document.getElementById('guardednessResult').innerHTML = `📊 Score: ${check.score} — ${check.productive ? '✓ Productive' : '⚠ May diverge'}`;
+            }
+        }
+        
+        guardSlider.oninput = (e) => {
+            const idx = parseInt(e.target.value);
+            checker.setLevel(idx);
+            updateGuardDisplay();
+            const pct = (idx / 3) * 100;
+            guardSlider.style.setProperty('--range-pct', pct + '%');
+            if(currentStream) updateWaveform();
+        };
+        
+        function updateStreamList(){
+            const container = document.getElementById('streamList');
+            if(streams.size===0){
+                container.innerHTML = '<div class="stream-card" style="text-align:center;">No streams loaded</div>';
+                return;
+            }
+            container.innerHTML = Array.from(streams.values()).map(s => {
+                const isSelected = currentStream === s;
+                return `<div class="stream-card ${isSelected?'selected':''}" onclick="selectStream('${s.name}')">
+                    <div class="step-badge">📊 ${s.name}</div>
+                    <div class="value-display"><code>[${s.take(5).join(', ')}...]</code></div>
+                </div>`;
+            }).join('');
+            
+            const waveSelect = document.getElementById('waveformSelect');
+            waveSelect.innerHTML = '<option value="">Select stream</option>' + Array.from(streams.keys()).map(n => `<option value="${n}">${n}</option>`).join('');
+            
+            const leftSelect = document.getElementById('leftStreamSelect');
+            const rightSelect = document.getElementById('rightStreamSelect');
+            const options = Array.from(streams.keys()).map(n => `<option value="${n}">${n}</option>`).join('');
+            leftSelect.innerHTML = '<option value="">Left</option>' + options;
+            rightSelect.innerHTML = '<option value="">Right</option>' + options;
+        }
+        
+        window.selectStream = (name) => {
+            if(streams.has(name)){
+                currentStream = streams.get(name);
+                updateWaveform();
+                updateStreamList();
+            }
+        };
+        
+        function updateWaveform(){
+            if(!currentStream) return;
+            visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1);
+            const preview = currentStream.take(20);
+            document.getElementById('sequencePreview').innerHTML = `[${preview.map(v=>v.toFixed(1)).join(', ')}...]`;
+        }
+        
+        function updateComparison(){
+            const leftName = document.getElementById('leftStreamSelect').value;
+            const rightName = document.getElementById('rightStreamSelect').value;
+            if(!leftName || !rightName || !streams.has(leftName) || !streams.has(rightName)){
+                document.getElementById('comparisonResult').innerHTML = '';
+                return;
+            }
+            const left = streams.get(leftName);
+            const right = streams.get(rightName);
+            const result = prover.prove(left, right, 100);
+            const resultDiv = document.getElementById('comparisonResult');
+            if(result.bisimilar){
+                resultDiv.innerHTML = `<div style="background:rgba(0,212,170,0.1); padding:0.3rem; text-align:center;">✓ BISIMILAR · ${result.stepsChecked} steps</div>`;
+            } else {
+                resultDiv.innerHTML = `<div style="background:rgba(255,107,107,0.1); padding:0.3rem; text-align:center;">✗ DIVERGENT at step ${result.step}<br>${leftName}: ${result.v1} ≠ ${rightName}: ${result.v2}</div>`;
+            }
+        }
+        
+        // ============================================
+        // Cluster Mining Display
+        // ============================================
+        function displayClusters(clusters){
+            const container = document.getElementById('clustersContainer');
+            if(!clusters.length){
+                container.innerHTML = '<div class="inference-result">No clusters found. Try reducing depth or min size.</div>';
+                return;
+            }
+            
+            const colorPalette = ['--cluster-1', '--cluster-2', '--cluster-3', '--cluster-4', '--cluster-5'];
+            
+            container.innerHTML = clusters.map((cluster, idx) => {
+                const insight = miner.getClusterInsight(cluster);
+                const color = colorPalette[idx % colorPalette.length];
+                const members = cluster.map(id => `<span class="cluster-tag" onclick="selectStream('OEIS_${id}')">${id} ${oeisData[id]?.name || ''}</span>`).join('');
+                
+                return `<div class="cluster-container" style="border-left-color:var(${color})" onclick="this.classList.toggle('expanded')">
+                    <div class="cluster-header">
+                        <strong>📊 Class ${idx + 1}</strong>
+                        <span class="cluster-size">${cluster.length} members</span>
+                    </div>
+                    <div style="font-size:0.55rem; margin-top:0.2rem;">${insight}</div>
+                    <div class="cluster-members">${members}</div>
+                </div>`;
+            }).join('');
+        }
+        
+        // ============================================
+        // Event Handlers
+        // ============================================
+        document.getElementById('loadExampleBtn').onclick = () => {
+            document.getElementById('streamEditor').value = `// Fibonacci\nconst fibonacci = { seed: [0, 1], step: ([a, b]) => [a, [b, a + b]] };\n\n// Powers of 2\nconst powersOf2 = { seed: 1, step: (n) => [n, n * 2] };`;
+        };
+        
+        document.getElementById('runStreamsBtn').onclick = () => {
+            try{
+                const code = document.getElementById('streamEditor').value;
+                const defs = parseStreamsFromCode(code);
+                streams.clear();
+                for(const [name,def] of Object.entries(defs)) streams.set(name, new ResStream(name, def.seed, def.step));
+                if(streams.size===0) alert('No valid streams found');
+                updateStreamList();
+                if(streams.size>0) selectStream(Array.from(streams.keys())[0]);
+            } catch(e){ alert('Error: '+e.message); }
+        };
+        
+        document.getElementById('clearStreamsBtn').onclick = () => {
+            streams.clear();
+            currentStream = null;
+            updateStreamList();
+            canvas.getContext('2d').fillRect(0,0,400,70);
+            document.getElementById('comparisonResult').innerHTML = '';
+        };
+        
+        document.getElementById('waveformSelect').onchange = (e) => { if(e.target.value && streams.has(e.target.value)) selectStream(e.target.value); };
+        document.getElementById('leftStreamSelect').onchange = () => updateComparison();
+        document.getElementById('rightStreamSelect').onchange = () => updateComparison();
+        document.getElementById('compareBtn').onclick = () => updateComparison();
+        
+        document.getElementById('fetchOeisBtn').onclick = () => {
+            const id = document.getElementById('oeisId').value.trim().toUpperCase();
+            if(!id || !oeisData[id]){ alert('Try: A000027, A000045, A000079, A000142, A000217, A000290'); return; }
+            const stream = loadFromOEIS(id);
+            streams.set(stream.name, stream);
+            updateStreamList();
+            selectStream(stream.name);
+        };
+        
+        // Animation
+        document.getElementById('playBtn').onclick = () => {
+            if(animationInterval) clearInterval(animationInterval);
+            let step = 0;
+            animationInterval = setInterval(() => {
+                if(step < 70){
+                    visualizer.draw(canvas, currentStream, 70, '#6c63ff', step);
+                    document.getElementById('stepSlider').value = step;
+                    document.getElementById('stepValue').innerText = step;
+                    step++;
+                } else {
+                    clearInterval(animationInterval);
+                    visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1);
+                }
+            }, 35);
+        };
+        document.getElementById('stopBtn').onclick = () => { if(animationInterval) clearInterval(animationInterval); visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1); };
+        document.getElementById('resetBtn').onclick = () => { currentStep = 0; updateWaveform(); };
+        document.getElementById('stepSlider').oninput = (e) => { currentStep = parseInt(e.target.value); visualizer.draw(canvas, currentStream, 70, '#6c63ff', currentStep); document.getElementById('stepValue').innerText = currentStep; };
+        
+        // CLUSTER MINING
+        document.getElementById('mineClustersBtn').onclick = () => {
+            const depth = parseInt(document.getElementById('clusterDepth').value) || 15;
+            const minSize = parseInt(document.getElementById('minClusterSize').value) || 2;
+            const domain = document.getElementById('clusterDomain').value;
+            
+            document.getElementById('clustersContainer').innerHTML = '<div class="inference-result">⛏️ Mining clusters... This may take a moment.</div>';
+            
+            // Small delay to show loading message
+            setTimeout(() => {
+                const clusters = miner.mineClusters(depth, minSize, domain);
+                displayClusters(clusters);
+            }, 50);
+        };
+        
+        // Similarity search mode toggle
+        document.getElementById('searchMode').onchange = () => {
+            const mode = document.getElementById('searchMode').value;
+            document.getElementById('similarityTargetDiv').style.display = (mode === 'similarity') ? 'block' : 'none';
+        };
+        
+        document.getElementById('runInferenceBtn').onclick = () => {
+            const mode = document.getElementById('searchMode').value;
+            const depth = parseInt(document.getElementById('searchDepth').value) || 20;
+            const container = document.getElementById('inferenceResults');
+            
+            if(mode === 'bisimilar'){
+                // For demo, just show a message since full pair enumeration is heavy
+                container.innerHTML = '<div class="inference-result">Use Cluster Mining above to find bisimilarity classes across the corpus.</div>';
+            } else if(mode === 'similarity'){
+                const targetId = document.getElementById('similarityTarget').value;
+                if(!targetId){ alert('Select a target sequence'); return; }
+                const results = findSimilarSequences(targetId, depth, 70);
+                container.innerHTML = results.map(r => `
+                    <div class="inference-result" onclick="selectStream('OEIS_${r.id}')">
+                        <strong>📊 ${r.id} — ${r.name}</strong>
+                        <div class="similarity-bar"><div class="similarity-fill" style="width:${r.similarity}%"></div></div>
+                        <div style="font-size:0.6rem;">${r.similarity.toFixed(0)}% similar (${r.matchCount}/${depth} steps)</div>
+                        <div style="font-size:0.55rem;">Diverges at step ${r.firstDivergence}</div>
+                    </div>
+                `).join('');
+                if(!results.length) container.innerHTML = '<div class="inference-result">No similar sequences found. Try lower threshold.</div>';
+            } else if(mode === 'guarded'){
+                const results = [];
+                for(const [id, seq] of Object.entries(oeisData)){
+                    const stream = loadFromOEIS(id);
+                    const check = checker.checkStream(stream);
+                    if(check.productive) results.push({ id, name: seq.name, score: check.score });
+                }
+                results.sort((a,b) => b.score - a.score);
+                container.innerHTML = results.slice(0,10).map(r => `
+                    <div class="inference-result" onclick="selectStream('OEIS_${r.id}')">
+                        <strong>🛡️ ${r.id} — ${r.name}</strong>
+                        <div style="font-size:0.6rem;">Productivity score: ${r.score}</div>
+                    </div>
+                `).join('');
+            } else if(mode === 'divergent'){
+                container.innerHTML = '<div class="inference-result">Use Cluster Mining to discover divergence patterns across the corpus.</div>';
+            }
+        };
+        
+        // Contextual Search
+        document.getElementById('contextSearchBtn').onclick = () => {
+            const prompt = document.getElementById('contextPrompt').value.trim().toLowerCase();
+            if(!prompt){ alert('Enter a search query'); return; }
+            const results = [];
+            for(const [id, seq] of Object.entries(oeisData)){
+                if(seq.name.toLowerCase().includes(prompt) || seq.domain === prompt){
+                    results.push({ id, name: seq.name, domain: seq.domain });
+                }
+            }
+            const container = document.getElementById('inferenceResults');
+            container.innerHTML = results.map(r => `
+                <div class="inference-result" onclick="selectStream('OEIS_${r.id}')">
+                    <strong>🏷️ ${r.id} — ${r.name}</strong>
+                    <div><span class="classification-badge badge-${r.domain}">${r.domain}</span></div>
+                </div>
+            `).join('');
+            if(!results.length) container.innerHTML = '<div class="inference-result">No sequences match your query.</div>';
+        };
+        
+        function populateMethodTree(){
+            document.getElementById('methodTree').innerHTML = `
+                <div class="tree-root">📐 Resolutive Research Tool</div>
+                <div class="tree-node">⛏️ Cluster Mining → finds bisimilarity classes in OEIS</div>
+                <div class="tree-node">📊 Each cluster = sequences indistinguishable for N steps</div>
+                <div class="tree-node">🔍 Click any cluster member to load and compare</div>
+                <div class="tree-node">💡 Clusters reveal hidden mathematical structure</div>
+                <div class="tree-node">⚖️ Guard slider → adjust productivity strictness</div>
+            `;
+        }
+        populateMethodTree();
+        
+        // Initial load
+        setTimeout(() => {
+            const defaultIds = ['A000027', 'A000045', 'A000079'];
+            defaultIds.forEach(id => { const stream = loadFromOEIS(id); streams.set(stream.name, stream); });
+            updateStreamList();
+            if(streams.size > 0) selectStream(Array.from(streams.keys())[0]);
+            updateGuardDisplay();
+        }, 100);
+    </script>
+</body>
+</html>
