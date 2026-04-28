@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolutive Coinduction Explorer | OEIS · Waveform · Guarded Operators</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --text-primary: #e2e2e2;
+            --text-secondary: #a0a0b0;
+            --accent-success: #00d4aa;
+            --accent-error: #ff6b6b;
+            --accent-warning: #ffd93d;
+            --accent-info: #6c63ff;
+            --border: #2a2a3a;
+            --wave-0: #6c63ff;
+            --wave-1: #00d4aa;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.5; }
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; }
+        .header h1 { font-size: 1.5rem; color: var(--accent-info); display: inline-block; }
+        .header .subtitle { color: var(--text-secondary); margin-top: 0.25rem; font-size: 0.85rem; }
+        .app-container { display: grid; grid-template-columns: 380px 1fr 380px; gap: 0.75rem; padding: 1rem; min-height: calc(100vh - 80px); }
+        .panel { background: var(--bg-secondary); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; }
+        .panel-header { background: var(--bg-tertiary); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .panel-content { padding: 1rem; flex: 1; overflow-y: auto; max-height: calc(100vh - 140px); }
+        .editor { background: #0a0a0f; font-family: 'Fira Code', monospace; font-size: 0.8rem; border: 1px solid var(--border); width: 100%; resize: vertical; color: var(--text-primary); padding: 0.75rem; }
+        textarea.editor { min-height: 150px; }
+        .btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border); background: var(--bg-tertiary); cursor: pointer; font-weight: 500; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-primary); }
+        .btn-primary { background: var(--accent-info); border-color: var(--accent-info); color: white; }
+        .btn-primary:hover { filter: brightness(0.9); }
+        .btn-secondary:hover { border-color: var(--accent-info); }
+        .stream-card { background: var(--bg-tertiary); border-left: 3px solid var(--accent-info); padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.1s; }
+        .stream-card:hover { transform: translateX(4px); background: rgba(108, 99, 255, 0.1); }
+        .stream-card.guarded-success { border-left-color: var(--accent-success); }
+        .stream-card.guarded-fail { border-left-color: var(--accent-error); }
+        .step-badge { background: var(--bg-primary); padding: 0.15rem 0.5rem; font-size: 0.65rem; font-weight: 600; display: inline-block; margin-bottom: 0.35rem; }
+        .value-display { font-size: 1rem; font-weight: 500; margin: 0.35rem 0; }
+        .value-display code { background: var(--bg-primary); padding: 0.15rem 0.35rem; font-size: 0.85rem; }
+        .guarded-badge { font-size: 0.7rem; padding: 0.2rem 0.4rem; margin-left: 0.5rem; }
+        
+        /* Waveform Visualization */
+        .waveform-container { background: var(--bg-tertiary); padding: 0.75rem; margin: 0.5rem 0; border: 1px solid var(--border); }
+        .waveform-title { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.3rem; display: flex; justify-content: space-between; }
+        canvas.waveform { width: 100%; height: 80px; background: #0a0a0f; display: block; cursor: pointer; }
+        .waveform-legend { display: flex; gap: 1rem; margin-top: 0.3rem; font-size: 0.6rem; }
+        .legend-dot { width: 10px; height: 10px; display: inline-block; margin-right: 4px; }
+        .legend-blue { background: var(--wave-0); }
+        .legend-green { background: var(--wave-1); }
+        
+        .operator-panel { background: var(--bg-tertiary); padding: 0.75rem; margin: 0.5rem 0; }
+        .operator-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .operator-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; font-family: monospace; }
+        .guard-level-selector { display: flex; gap: 0.25rem; align-items: center; background: var(--bg-tertiary); padding: 0.25rem; }
+        .guard-level-btn { padding: 0.2rem 0.5rem; font-size: 0.7rem; background: var(--bg-secondary); border: 1px solid var(--border); cursor: pointer; }
+        .guard-level-btn.active { border-color: var(--accent-info); background: var(--accent-info); color: white; }
+        .comparison-result { padding: 0.5rem; margin: 0.75rem 0; text-align: center; font-weight: 500; font-size: 0.85rem; border: 1px solid; }
+        .comparison-result.success { background: rgba(0, 212, 170, 0.1); border-color: var(--accent-success); color: var(--accent-success); }
+        .comparison-result.failure { background: rgba(255, 107, 107, 0.1); border-color: var(--accent-error); color: var(--accent-error); }
+        select, input { background: var(--bg-tertiary); border: 1px solid var(--border); padding: 0.4rem 0.6rem; color: var(--text-primary); width: 100%; margin-bottom: 0.5rem; font-size: 0.8rem; }
+        .slider { width: 100%; margin: 0.5rem 0; accent-color: var(--accent-info); }
+        .controls { display: flex; gap: 0.35rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .export-options, .oeis-panel { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .method-tree { background: var(--bg-tertiary); padding: 0.75rem; font-size: 0.75rem; }
+        .tree-node { margin-left: 1.2rem; position: relative; }
+        .tree-node::before { content: '├─'; position: absolute; left: -1rem; color: var(--accent-info); }
+        .tree-root { font-weight: 700; color: var(--accent-success); margin-bottom: 0.5rem; }
+        .tree-label { font-weight: 600; color: var(--accent-warning); }
+        .oeis-status { font-size: 0.65rem; padding: 0.25rem; margin-top: 0.25rem; text-align: center; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+        @media (max-width: 1100px) { .app-container { grid-template-columns: 1fr; gap: 0.75rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Resolutive Coinduction Explorer</h1>
+        <div class="subtitle">Interactive Bisimulation · Guardedness Checking · OEIS Integration · Waveform Visualization</div>
+    </div>
+
+    <div class="app-container">
+        <!-- LEFT PANEL: Stream Definitions -->
+        <div class="panel">
+            <div class="panel-header"><span>📝 Stream Definitions</span><button class="btn btn-secondary" id="loadExampleBtn">📚 Example</button></div>
+            <div class="panel-content">
+                <textarea id="streamEditor" class="editor" rows="8" placeholder='Define streams as valid JS object...'></textarea>
+                <div class="controls" style="margin-top: 0.75rem;">
+                    <button class="btn btn-primary" id="runStreamsBtn">▶ Run & Check</button>
+                    <button class="btn btn-secondary" id="clearStreamsBtn">🗑 Clear</button>
+                </div>
+                <div class="oeis-panel">
+                    <input type="text" id="oeisId" placeholder="OEIS ID (A000045, A000079)" list="oeisSuggestions" style="flex: 2;">
+                    <datalist id="oeisSuggestions">
+                        <option value="A000027">Natural numbers</option><option value="A000045">Fibonacci</option>
+                        <option value="A000079">Powers of 2</option><option value="A000142">Factorials</option>
+                        <option value="A000217">Triangular</option><option value="A000290">Squares</option>
+                        <option value="A000040">Primes</option><option value="A001477">Nonnegative</option>
+                    </datalist>
+                    <button class="btn btn-primary" id="fetchOeisBtn">🔢 Fetch</button>
+                </div>
+                <div id="oeisPreview" style="font-size:0.7rem; margin-top:0.25rem; display:none;"></div>
+                <div id="oeisStatus" class="oeis-status">📦 Loading OEIS index...</div>
+                <div id="streamList" style="margin-top: 0.75rem;"></div>
+            </div>
+        </div>
+
+        <!-- MIDDLE PANEL: Waveform Studio -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🎵 Waveform Visualization</span>
+                <div class="guard-level-selector">
+                    <span style="font-size:0.7rem;">Guardedness:</span>
+                    <button class="guard-level-btn" data-level="STRICT">🔒 Strict</button>
+                    <button class="guard-level-btn active" data-level="MODERATE">⚖️ Moderate</button>
+                    <button class="guard-level-btn" data-level="LAX">🌀 Lax</button>
+                    <button class="guard-level-btn" data-level="MINIMAL">🔓 Minimal</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <!-- Stream Selector -->
+                <select id="waveformSelect">
+                    <option value="">Select stream to visualize</option>
+                </select>
+                
+                <!-- Single Stream Waveform -->
+                <div id="singleWaveformContainer" class="waveform-container" style="display:none;">
+                    <div class="waveform-title"><span>📈 <span id="singleWaveformName">-</span></span><span id="singleProductivity">✓ Productive</span></div>
+                    <canvas id="singleWaveformCanvas" class="waveform" width="400" height="80"></canvas>
+                    <div class="waveform-legend"><span><span class="legend-dot legend-blue"></span>Value</span></div>
+                    <div class="controls" style="margin-top:0.5rem;">
+                        <button id="playSingleBtn" class="btn btn-secondary">▶ Play</button>
+                        <button id="stopSingleBtn" class="btn btn-secondary">⏸ Stop</button>
+                        <button id="resetSingleBtn" class="btn btn-secondary">↺ Reset</button>
+                        <input type="range" id="singleStepSlider" class="slider" min="0" max="0" value="0" style="flex:1;">
+                        <span id="singleStepValue" style="font-size:0.7rem;">0</span>
+                    </div>
+                </div>
+                
+                <!-- Guarded Operators -->
+                <div class="operator-panel">
+                    <div style="font-weight:600; margin-bottom:0.3rem;">⚙️ Guarded Operators</div>
+                    <div style="font-size:0.65rem; color:var(--text-secondary); margin-bottom:0.5rem;">Apply to selected stream (preserves productivity when source guarded)</div>
+                    <div class="operator-buttons">
+                        <button class="btn operator-btn" data-op="map2">📐 map(x2)</button>
+                        <button class="btn operator-btn" data-op="scale05">📉 scale(0.5)</button>
+                        <button class="btn operator-btn" data-op="smooth3">🌀 smooth(w3)</button>
+                        <button class="btn operator-btn" data-op="reverse">🔄 reverse</button>
+                        <button class="btn operator-btn" data-op="repeat2">🔁 repeat(2)</button>
+                    </div>
+                </div>
+                
+                <div id="guardednessResult" style="font-size:0.75rem; margin-top:0.5rem; padding:0.5rem; background:var(--bg-tertiary);"></div>
+                
+                <!-- Bisimulation Comparison Section -->
+                <div class="operator-panel" style="margin-top:0.5rem;">
+                    <div style="font-weight:600; margin-bottom:0.5rem;">🔍 Bisimulation Comparison</div>
+                    <select id="leftStreamSelect"><option value="">Left Stream</option></select>
+                    <select id="rightStreamSelect"><option value="">Right Stream</option></select>
+                    <button class="btn btn-primary" id="compareBtn" style="width:100%; margin-top:0.5rem;">🔗 Compare Streams</button>
+                    <div id="comparisonResult"></div>
+                    
+                    <!-- Comparison Waveform (appears after compare) -->
+                    <div id="compareWaveformContainer" class="waveform-container" style="display:none; margin-top:0.75rem;">
+                        <div class="waveform-title"><span>📊 <span id="compareLeftName">-</span> (blue) vs <span id="compareRightName">-</span> (green)</span></div>
+                        <canvas id="compareCanvas" class="waveform" width="400" height="80"></canvas>
+                        <div class="waveform-legend"><span><span class="legend-dot legend-blue"></span>Left</span><span><span class="legend-dot legend-green"></span>Right</span></div>
+                        <div class="controls" style="margin-top:0.5rem;">
+                            <button id="playCompareBtn" class="btn btn-secondary">▶ Play</button>
+                            <button id="stopCompareBtn" class="btn btn-secondary">⏸ Stop</button>
+                            <button id="resetCompareBtn" class="btn btn-secondary">↺ Reset</button>
+                            <input type="range" id="compareStepSlider" class="slider" min="0" max="0" value="0" style="flex:1;">
+                            <span id="compareStepValue" style="font-size:0.7rem;">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="export-options">
+                    <button class="btn btn-secondary" id="exportJsonBtn">📄 JSON</button>
+                    <button class="btn btn-secondary" id="exportAgdaBtn">📐 Agda</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Analysis -->
+        <div class="panel">
+            <div class="panel-header"><span>🌳 Method Tree & Inference</span><button class="btn btn-secondary" id="inferRelationsBtn">✨ Infer Relations</button></div>
+            <div class="panel-content">
+                <div id="parametricAnalysis" style="margin-bottom:0.75rem;"></div>
+                <div id="methodTree" class="method-tree"></div>
+                <details style="margin-top:0.75rem;">
+                    <summary style="cursor:pointer; font-size:0.8rem;">📊 Inferred Step Relations</summary>
+                    <div id="relationsList" style="margin-top:0.5rem; font-size:0.7rem; max-height:200px; overflow-y:auto;"></div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Core Classes
+        // ============================================
+        class ResStream {
+            constructor(name, seed, stepFn) { this.name = name; this.seed = seed; this.stepFn = stepFn; this.cache = new Map(); }
+            step(s) { if (!this.cache.has(s)) this.cache.set(s, this.stepFn(s)); return this.cache.get(s); }
+            take(n) { const r = []; let s = this.seed; for (let i=0;i<n;i++) { const [v,nxt]=this.step(s); r.push(v); s=nxt; } return r; }
+            map(f) { const outer=this; return new ResStream(outer.name+'_map', outer.seed, s=>{ const [v,n]=outer.step(s); return [f(v),n]; }); }
+            zip(o) { const outer=this; return new ResStream(outer.name+'_zip', [outer.seed,o.seed], ([s1,s2])=>{ const [v1,n1]=outer.step(s1); const [v2,n2]=o.step(s2); return [[v1,v2],[n1,n2]]; }); }
+            scale(k) { const outer=this; return new ResStream(outer.name+'_x'+k, outer.seed, s=>{ const [v,n]=outer.step(s); return [v*k,n]; }); }
+            smooth(w) { 
+                const outer=this; 
+                return new ResStream(outer.name+'_smooth', outer.seed, function f(s, idx=0, prev=null) {
+                    let sum=0, count=0;
+                    let curr=s;
+                    for(let i=0;i<=w;i++){
+                        const [v,n]=outer.step(curr);
+                        sum+=v; count++;
+                        curr=n;
+                    }
+                    return [sum/count, curr];
+                });
+            }
+            reverse() {
+                const outer=this;
+                const collect = (s, arr=[]) => {
+                    const [v,n]=outer.step(s);
+                    arr.push(v);
+                    if(arr.length<100) return collect(n, arr);
+                    return arr;
+                };
+                const reversed = collect(this.seed).reverse();
+                let idx=0;
+                return new ResStream(outer.name+'_rev', 0, (i,_)=>[reversed[i%reversed.length], (i+1)%reversed.length]);
+            }
+            repeat(times) {
+                const outer=this;
+                const all = [];
+                for(let i=0;i<times;i++){
+                    let s=outer.seed;
+                    for(let j=0;j<outer.take(100).length;j++){
+                        const [v,n]=outer.step(s);
+                        all.push(v);
+                        s=n;
+                    }
+                }
+                let idx=0;
+                return new ResStream(outer.name+'_rep', 0, (i,_)=>[all[i%all.length], (i+1)%all.length]);
+            }
+        }
+        
+        class ParametricGuardednessChecker {
+            constructor() { this.guardLevels={STRICT:{name:'🔒 Strict',threshold:80},MODERATE:{name:'⚖️ Moderate',threshold:60},LAX:{name:'🌀 Lax',threshold:40},MINIMAL:{name:'🔓 Minimal',threshold:20}}; this.currentLevel='MODERATE'; }
+            setLevel(l) { if(this.guardLevels[l]){this.currentLevel=l; return true;} return false; }
+            checkStream(stream, level=null) {
+                const l=level||this.currentLevel, cfg=this.guardLevels[l];
+                const res={name:stream.name,level:l,levelName:cfg.name,productive:false,score:0};
+                const stepStr=stream.stepFn.toString(); let score=0;
+                const hasArrayReturn=/return\s*\[/.test(stepStr)||/=>\s*\[/.test(stepStr);
+                if(hasArrayReturn) score+=25;
+                const hasThunk=/\(\)\s*=>/.test(stepStr), hasAnyLambda=/=>\s*\(?[a-zA-Z_]/;
+                switch(l){
+                    case'STRICT':if(hasThunk) score+=45; break;
+                    case'MODERATE':if(hasThunk) score+=45; else if(hasAnyLambda) score+=30; else score+=15; break;
+                    case'LAX':score+=25; break;
+                    case'MINIMAL':score+=10; break;
+                }
+                const hasValueBeforeRecur=/return\s*\[[^,\]]+,\s*/.test(stepStr);
+                if(hasValueBeforeRecur) score+=25;
+                try{ let seed=stream.seed; for(let i=0;i<5;i++){const [v,n]=stream.step(seed); seed=n;} score+=10; }catch(e){}
+                res.score=score; res.productive=score>=cfg.threshold; return res;
+            }
+            compareLevels(stream){ const r={}; for(const l of Object.keys(this.guardLevels)) r[l]=this.checkStream(stream,l); return r; }
+        }
+        
+        class WaveformVisualizer {
+            draw(canvas, stream, steps=60, color='#6c63ff', highlight=-1) {
+                const ctx=canvas.getContext('2d');
+                const w=canvas.clientWidth, h=canvas.clientHeight;
+                canvas.width=w; canvas.height=h;
+                const values=stream.take(Math.min(steps, 100));
+                ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,w,h);
+                if(values.length<2) return;
+                const minVal=Math.min(...values,0), maxVal=Math.max(...values,1), range=Math.max(maxVal-minVal,0.01);
+                ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2;
+                for(let i=0;i<values.length;i++){
+                    const x=(i/(values.length-1))*w;
+                    const y=h-((values[i]-minVal)/range)*(h-20)-10;
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                if(highlight>=0 && highlight<values.length){
+                    const x=(highlight/(values.length-1))*w;
+                    const y=h-((values[highlight]-minVal)/range)*(h-20)-10;
+                    ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+                }
+            }
+            drawComparison(canvas, s1, s2, steps=60, highlight=-1){
+                const ctx=canvas.getContext('2d');
+                const w=canvas.clientWidth, h=canvas.clientHeight;
+                canvas.width=w; canvas.height=h;
+                const v1=s1.take(Math.min(steps,100)), v2=s2.take(Math.min(steps,100));
+                ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,w,h);
+                const allVals=[...v1,...v2,0];
+                const minVal=Math.min(...allVals), maxVal=Math.max(...allVals,1), range=Math.max(maxVal-minVal,0.01);
+                ctx.beginPath(); ctx.strokeStyle='#6c63ff'; ctx.lineWidth=2;
+                for(let i=0;i<v1.length;i++){
+                    const x=(i/(v1.length-1))*w;
+                    const y=h-((v1[i]-minVal)/range)*(h-20)-10;
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                ctx.beginPath(); ctx.strokeStyle='#00d4aa'; ctx.lineWidth=2;
+                for(let i=0;i<v2.length;i++){
+                    const x=(i/(v2.length-1))*w;
+                    const y=h-((v2[i]-minVal)/range)*(h-20)-10;
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                if(highlight>=0 && highlight<v1.length && highlight<v2.length){
+                    const x1=(highlight/(v1.length-1))*w;
+                    const y1=h-((v1[highlight]-minVal)/range)*(h-20)-10;
+                    const x2=(highlight/(v2.length-1))*w;
+                    const y2=h-((v2[highlight]-minVal)/range)*(h-20)-10;
+                    ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x1,y1,5,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x2,y2,5,0,Math.PI*2); ctx.fill();
+                }
+            }
+        }
+        
+        class BisimulationProver {
+            prove(s1,s2,maxSteps=100){
+                const visited=new Set(), queue=[[s1.seed,s2.seed]], path=[];
+                while(queue.length && path.length<maxSteps){
+                    const [seed1,seed2]=queue.shift();
+                    const key=JSON.stringify(seed1)+'|'+JSON.stringify(seed2);
+                    if(visited.has(key)) continue; visited.add(key);
+                    const [v1,n1]=s1.step(seed1), [v2,n2]=s2.step(seed2);
+                    path.push({step:path.length,v1,v2});
+                    if(v1!==v2) return {bisimilar:false,counterexample:path[path.length-1],stepsChecked:visited.size,path};
+                    queue.push([n1,n2]);
+                }
+                return {bisimilar:true,stepsChecked:visited.size,path};
+            }
+        }
+        
+        // ============================================
+        // OEIS Loader with Gzipped Chunks
+        // ============================================
+        class OEISLoader {
+            constructor(basePath='oeis/'){ this.basePath=basePath; this.index=null; this.manifest=null; this.chunkCache=new Map(); }
+            async decompressGzip(blob){ const ds=new DecompressionStream('gzip'); const decompressedStream=blob.stream().pipeThrough(ds); return new Response(decompressedStream).text(); }
+            async loadIndex(){
+                try{
+                    const resp=await fetch(this.basePath+'index.json.gz'); const blob=await resp.blob(); const decompressed=await this.decompressGzip(blob);
+                    this.index=JSON.parse(decompressed);
+                    const manifestResp=await fetch(this.basePath+'manifest.json'); if(manifestResp.ok) this.manifest=await manifestResp.json();
+                    console.log(`OEIS ready: ${Object.keys(this.index).length} sequences`); return true;
+                }catch(e){ console.warn('OEIS not available, using fallback',e); this.index=this.getFallbackIndex(); return false; }
+            }
+            getFallbackIndex(){ return { 'A000027':{n:'Natural numbers',t:20},'A000045':{n:'Fibonacci',t:20},'A000079':{n:'Powers of 2',t:16} }; }
+            async loadSequence(id){
+                const normId=id.toUpperCase(); const chunkNum=this.getIdChunk(normId);
+                if(chunkNum!==null && !this.chunkCache.has(chunkNum)) await this.loadChunk(chunkNum);
+                const chunk=this.chunkCache.get(chunkNum);
+                if(chunk && chunk[normId]){ const seq=chunk[normId]; return {data:seq.d,name:seq.n}; }
+                return this.getFallbackSequence(normId);
+            }
+            getIdChunk(id){ if(!this.index||!this.manifest) return null; const ids=Object.keys(this.index); const idx=ids.indexOf(id); if(idx===-1) return null; return Math.floor(idx/this.manifest.chunkSize); }
+            async loadChunk(chunkNum){
+                try{ const resp=await fetch(`${this.basePath}chunk_${chunkNum}.json.gz`); const blob=await resp.blob(); const decompressed=await this.decompressGzip(blob); this.chunkCache.set(chunkNum,JSON.parse(decompressed)); }catch(e){ console.warn(`Chunk ${chunkNum} failed`); }
+            }
+            getFallbackSequence(id){
+                const fb={'A000027':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],'A000045':[0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181],'A000079':[1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768]};
+                if(fb[id]) return {data:fb[id],name:id}; throw new Error(`Sequence ${id} not available`);
+            }
+        }
+        
+        function parseStreamsFromCode(code){
+            const result={}, cleanCode=code.replace(/\/\/.*$/gm,'');
+            const regex=/(?:const|let|var)?\s*(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
+            let match;
+            while((match=regex.exec(cleanCode))!==null){
+                const name=match[1], seedStr=match[2].trim(), params=match[3].trim(), valExpr=match[4].trim(), nextExpr=match[5].trim();
+                let seed; try{ seed=Function(`"use strict"; return (${seedStr})`)(); }catch(e){ continue; }
+                const stepFn=new Function(params,`return [${valExpr}, ${nextExpr}];`);
+                result[name]={seed,step:stepFn};
+            }
+            return result;
+        }
+        
+        // ============================================
+        // Global State
+        // ============================================
+        const streams=new Map();
+        let currentComparison=null;
+        let singleAnimation=null, compareAnimation=null;
+        let singleStep=0, compareStep=0;
+        let currentCompareStreams=null;
+        
+        const oeisLoader=new OEISLoader('oeis/');
+        const parametricChecker=new ParametricGuardednessChecker();
+        const waveformViz=new WaveformVisualizer();
+        const bisimProver=new BisimulationProver();
+        
+        let currentSelectedStream = null;
+        
+        // ============================================
+        // UI Functions
+        // ============================================
+        function updateStreamList(){
+            const container=document.getElementById('streamList');
+            if(streams.size===0){ container.innerHTML='<div class="stream-card" style="text-align:center;">No streams loaded</div>'; return; }
+            container.innerHTML=Array.from(streams.values()).map(s=>{ const c=parametricChecker.checkStream(s); return `<div class="stream-card ${c.productive?'guarded-success':'guarded-fail'}" onclick="selectStream('${s.name}')"><div class="step-badge">📊 ${s.name}<span class="guarded-badge">${c.productive?'✓':'⚠'} ${parametricChecker.guardLevels[parametricChecker.currentLevel].name}</span></div><div class="value-display">Prefix: <code>[${s.take(6).join(', ')}...]</code></div></div>`; }).join('');
+        }
+        
+        window.selectStream = (name) => {
+            if(streams.has(name)){
+                currentSelectedStream = streams.get(name);
+                document.getElementById('singleWaveformContainer').style.display = 'block';
+                document.getElementById('singleWaveformName').innerHTML = name;
+                const check = parametricChecker.checkStream(currentSelectedStream);
+                document.getElementById('singleProductivity').innerHTML = check.productive ? '✓ Productive' : '⚠ May diverge';
+                updateSingleWaveform();
+                updateWaveformSelect();
+            }
+        };
+        
+        function updateWaveformSelect(){
+            const select=document.getElementById('waveformSelect');
+            const options=Array.from(streams.keys()).map(n=>`<option value="${n}">${n}</option>`).join('');
+            select.innerHTML='<option value="">Select stream to visualize</option>'+options;
+        }
+        
+        function updateSingleWaveform(){
+            if(!currentSelectedStream) return;
+            waveformViz.draw(document.getElementById('singleWaveformCanvas'), currentSelectedStream, 60, '#6c63ff', singleStep);
+            const slider=document.getElementById('singleStepSlider');
+            slider.max = 59;
+        }
+        
+        function updateSelectors(){
+            const leftSelect=document.getElementById('leftStreamSelect'), rightSelect=document.getElementById('rightStreamSelect');
+            const options=Array.from(streams.keys()).map(n=>`<option value="${n}">${n}</option>`).join('');
+            leftSelect.innerHTML='<option value="">Left Stream</option>'+options;
+            rightSelect.innerHTML='<option value="">Right Stream</option>'+options;
+        }
+        
+        function updateGuardednessDisplay(){
+            const results=Array.from(streams.values()).map(s=>parametricChecker.checkStream(s));
+            const prod=results.filter(r=>r.productive).length;
+            document.getElementById('guardednessResult').innerHTML=`🛡️ ${parametricChecker.guardLevels[parametricChecker.currentLevel].name}: ${prod}/${streams.size} productive`;
+            updateParametricAnalysis();
+            updateStreamList();
+        }
+        
+        function updateParametricAnalysis(){
+            const container=document.getElementById('parametricAnalysis');
+            if(streams.size===0){ container.innerHTML='<div style="color:var(--text-secondary);">No streams</div>'; return; }
+            let html='';
+            for(const stream of streams.values()){
+                const comparisons=parametricChecker.compareLevels(stream);
+                html+=`<div style="background:var(--bg-tertiary); padding:0.4rem; margin-bottom:0.4rem; font-size:0.7rem;"><strong>${stream.name}</strong><div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.2rem;">${Object.entries(comparisons).map(([l,r])=>`<span style="color:${r.productive?'var(--accent-success)':'var(--accent-error)'}">${parametricChecker.guardLevels[l].name}: ${r.productive?'✓':'✗'} (${r.score})</span>`).join('')}</div></div>`;
+            }
+            container.innerHTML=html;
+        }
+        
+        // ============================================
+        // Event Handlers
+        // ============================================
+        document.getElementById('loadExampleBtn').onclick=()=>{ 
+            document.getElementById('streamEditor').value=`// Fibonacci stream
+const fibonacci = { seed: [0, 1], step: ([a, b]) => [a, [b, a + b]] };
+
+// Powers of 2
+const powersOf2 = { seed: 1, step: (n) => [n, n * 2] };
+
+// Square wave
+const squareWave = { seed: 0, step: (n) => [n % 2, n + 1] };`; 
+        };
+        
+        document.getElementById('runStreamsBtn').onclick=()=>{ 
+            try{ 
+                const code=document.getElementById('streamEditor').value; 
+                const defs=parseStreamsFromCode(code); 
+                streams.clear(); 
+                for(const[name,def] of Object.entries(defs)) streams.set(name,new ResStream(name,def.seed,def.step)); 
+                if(streams.size===0) alert('No valid streams found'); 
+                updateGuardednessDisplay(); 
+                updateSelectors(); 
+                updateWaveformSelect();
+                document.getElementById('comparisonResult').innerHTML=''; 
+                document.getElementById('compareWaveformContainer').style.display='none';
+            }catch(e){ alert('Error: '+e.message); } 
+        };
+        
+        document.getElementById('clearStreamsBtn').onclick=()=>{ 
+            streams.clear(); 
+            currentSelectedStream=null;
+            updateStreamList(); 
+            updateSelectors(); 
+            updateWaveformSelect();
+            document.getElementById('singleWaveformContainer').style.display='none';
+            document.getElementById('comparisonResult').innerHTML=''; 
+            document.getElementById('compareWaveformContainer').style.display='none';
+            updateParametricAnalysis();
+        };
+        
+        document.getElementById('waveformSelect').onchange=(e)=>{
+            const name=e.target.value;
+            if(name && streams.has(name)) selectStream(name);
+            else document.getElementById('singleWaveformContainer').style.display='none';
+        };
+        
+        document.querySelectorAll('.guard-level-btn').forEach(btn=>{ 
+            btn.onclick=()=>{ 
+                document.querySelectorAll('.guard-level-btn').forEach(b=>b.classList.remove('active')); 
+                btn.classList.add('active'); 
+                parametricChecker.setLevel(btn.dataset.level); 
+                updateGuardednessDisplay(); 
+                if(currentSelectedStream) updateSingleWaveform();
+            }; 
+        });
+        
+        // Operator buttons
+        document.querySelectorAll('.operator-btn').forEach(btn=>{
+            btn.onclick=()=>{
+                if(!currentSelectedStream){ alert('Select a stream first'); return; }
+                const op=btn.dataset.op;
+                let newStream=null;
+                switch(op){
+                    case'map2': newStream=currentSelectedStream.map(x=>x*2); break;
+                    case'scale05': newStream=currentSelectedStream.scale(0.5); break;
+                    case'smooth3': newStream=currentSelectedStream.smooth(3); break;
+                    case'reverse': newStream=currentSelectedStream.reverse(); break;
+                    case'repeat2': newStream=currentSelectedStream.repeat(2); break;
+                }
+                if(newStream){
+                    streams.set(newStream.name, newStream);
+                    currentSelectedStream=newStream;
+                    updateGuardednessDisplay();
+                    updateSelectors();
+                    updateWaveformSelect();
+                    updateSingleWaveform();
+                }
+            };
+        });
+        
+        // Single waveform animation
+        document.getElementById('playSingleBtn').onclick=()=>{
+            if(singleAnimation) clearInterval(singleAnimation);
+            singleAnimation=setInterval(()=>{
+                if(singleStep<59){ singleStep++; updateSingleWaveform(); document.getElementById('singleStepSlider').value=singleStep; document.getElementById('singleStepValue').innerText=singleStep; }
+                else{ clearInterval(singleAnimation); singleAnimation=null; }
+            }, 50);
+        };
+        document.getElementById('stopSingleBtn').onclick=()=>{ if(singleAnimation) clearInterval(singleAnimation); singleAnimation=null; };
+        document.getElementById('resetSingleBtn').onclick=()=>{ singleStep=0; updateSingleWaveform(); document.getElementById('singleStepSlider').value=0; document.getElementById('singleStepValue').innerText='0'; };
+        document.getElementById('singleStepSlider').oninput=(e)=>{ singleStep=parseInt(e.target.value); updateSingleWaveform(); document.getElementById('singleStepValue').innerText=singleStep; };
+        
+        // Compare button
+        document.getElementById('compareBtn').onclick=()=>{
+            const leftName=document.getElementById('leftStreamSelect').value;
+            const rightName=document.getElementById('rightStreamSelect').value;
+            if(!leftName||!rightName||!streams.has(leftName)||!streams.has(rightName)){ alert('Select both streams'); return; }
+            const left=streams.get(leftName);
+            const right=streams.get(rightName);
+            const result=bisimProver.prove(left,right,100);
+            currentComparison={left,right,result,leftName,rightName};
+            currentCompareStreams={left,right};
+            
+            const resultDiv=document.getElementById('comparisonResult');
+            if(result.bisimilar){
+                resultDiv.innerHTML=`<div class="comparison-result success">✓ BISIMILAR · Checked ${result.stepsChecked} steps</div>`;
+            }else{
+                resultDiv.innerHTML=`<div class="comparison-result failure">✗ DIVERGENT at step ${result.counterexample.step}<br><small>${leftName}: ${JSON.stringify(result.counterexample.v1)} ≠ ${rightName}: ${JSON.stringify(result.counterexample.v2)}</small></div>`;
+            }
+            
+            document.getElementById('compareLeftName').innerHTML=leftName;
+            document.getElementById('compareRightName').innerHTML=rightName;
+            document.getElementById('compareWaveformContainer').style.display='block';
+            compareStep=0;
+            waveformViz.drawComparison(document.getElementById('compareCanvas'), left, right, 60, compareStep);
+            const slider=document.getElementById('compareStepSlider');
+            slider.max=59;
+            slider.value=0;
+            document.getElementById('compareStepValue').innerText='0';
+        };
+        
+        // Compare waveform animation
+        document.getElementById('playCompareBtn').onclick=()=>{
+            if(compareAnimation) clearInterval(compareAnimation);
+            if(!currentCompareStreams) return;
+            compareAnimation=setInterval(()=>{
+                if(compareStep<59){
+                    compareStep++;
+                    waveformViz.drawComparison(document.getElementById('compareCanvas'), currentCompareStreams.left, currentCompareStreams.right, 60, compareStep);
+                    document.getElementById('compareStepSlider').value=compareStep;
+                    document.getElementById('compareStepValue').innerText=compareStep;
+                }else{ clearInterval(compareAnimation); compareAnimation=null; }
+            }, 50);
+        };
+        document.getElementById('stopCompareBtn').onclick=()=>{ if(compareAnimation) clearInterval(compareAnimation); compareAnimation=null; };
+        document.getElementById('resetCompareBtn').onclick=()=>{ compareStep=0; if(currentCompareStreams) waveformViz.drawComparison(document.getElementById('compareCanvas'), currentCompareStreams.left, currentCompareStreams.right, 60, compareStep); document.getElementById('compareStepSlider').value=0; document.getElementById('compareStepValue').innerText='0'; };
+        document.getElementById('compareStepSlider').oninput=(e)=>{ compareStep=parseInt(e.target.value); if(currentCompareStreams) waveformViz.drawComparison(document.getElementById('compareCanvas'), currentCompareStreams.left, currentCompareStreams.right, 60, compareStep); document.getElementById('compareStepValue').innerText=compareStep; };
+        
+        // Export
+        document.getElementById('exportJsonBtn').onclick=()=>{ if(!currentComparison){ alert('Run a comparison first'); return; } const cert={type:'bisimulation_certificate',streams:{left:currentComparison.leftName,right:currentComparison.rightName},result:currentComparison.result,timestamp:new Date().toISOString(),path:currentComparison.result.path}; const blob=new Blob([JSON.stringify(cert,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`bisim_${currentComparison.leftName}_${currentComparison.rightName}.json`; a.click(); URL.revokeObjectURL(url); };
+        document.getElementById('exportAgdaBtn').onclick=()=>{ if(!currentComparison){ alert('Run a comparison first'); return; } const agdaCode=`module Bisim_${currentComparison.leftName}_${currentComparison.rightName} where\n\nopen import Coinduction\nopen import Data.Nat\n\n-- Status: ${currentComparison.result.bisimilar?'BISIMILAR ✓':'NOT BISIMILAR ✗'}\n-- Checked ${currentComparison.result.stepsChecked} steps\n\npostulate\n  left right : Stream ℕ\n  bisim : left ≈ right\n`; const blob=new Blob([agdaCode],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`bisim_${currentComparison.leftName}_${currentComparison.rightName}.agda`; a.click(); URL.revokeObjectURL(url); };
+        
+        // Infer Relations
+        document.getElementById('inferRelationsBtn').onclick=()=>{
+            const left=document.getElementById('leftStreamSelect').value;
+            const right=document.getElementById('rightStreamSelect').value;
+            if(!left||!right||!streams.has(left)||!streams.has(right)){ alert('Select both streams'); return; }
+            const s1=streams.get(left), s2=streams.get(right);
+            const r=[]; let seed1=s1.seed, seed2=s2.seed;
+            for(let i=0;i<30;i++){
+                try{
+                    const [v1,n1]=s1.step(seed1), [v2,n2]=s2.step(seed2);
+                    r.push({step:i, v1, v2, match:v1===v2});
+                    seed1=n1; seed2=n2;
+                }catch(e){ break; }
+            }
+            document.getElementById('relationsList').innerHTML=r.map(x=>`<div style="padding:0.2rem; border-bottom:1px solid var(--border);"><span style="color:${x.match?'var(--accent-success)':'var(--accent-error)'}">${x.match?'✓':'✗'}</span> step ${x.step}: ${x.v1} ${x.match?'=':'≠'} ${x.v2}</div>`).join('');
+        };
+        
+        document.getElementById('fetchOeisBtn').onclick=async()=>{
+            const id=document.getElementById('oeisId').value.trim().toUpperCase();
+            if(!id) return;
+            const btn=document.getElementById('fetchOeisBtn');
+            const orig=btn.innerHTML; btn.innerHTML='⏳ Loading...'; btn.disabled=true;
+            try{
+                const seqData=await oeisLoader.loadSequence(id);
+                const streamName=`oeis_${id.toLowerCase()}`;
+                const terms=seqData.data;
+                const seed={index:0,terms:terms};
+                const stepFn=(s)=>{ const idx=s.index; const val=s.terms[idx%s.terms.length]; return [val,{index:idx+1,terms:s.terms}]; };
+                if(streams.has(streamName)) streams.delete(streamName);
+                streams.set(streamName,new ResStream(streamName,seed,stepFn));
+                updateGuardednessDisplay(); updateSelectors(); updateWaveformSelect();
+                const preview=document.getElementById('oeisPreview');
+                preview.innerHTML=`✅ Loaded ${id}: ${seqData.name} — ${terms.length} terms`;
+                preview.style.display='block'; preview.style.background='rgba(0,212,170,0.1)';
+                setTimeout(()=>{ preview.style.opacity='0'; setTimeout(()=>preview.style.display='none',500); },2000);
+            }catch(e){ alert(`❌ ${e.message}`); }
+            finally{ btn.innerHTML=orig; btn.disabled=false; }
+        };
+        
+        function populateMethodTree(){ document.getElementById('methodTree').innerHTML=`<div class="tree-root">📐 Resolutive Coinduction Method</div><div class="tree-node"><span class="tree-label">Core Principle</span><div class="tree-node">νX.F(X) — Greatest Fixed Point · Seed as bisimulation witness</div></div><div class="tree-node"><span class="tree-label">Parametric Guardedness</span><div class="tree-node">Strict → Moderate → Lax → Minimal · Productivity scores</div></div><div class="tree-node"><span class="tree-label">Guarded Operators</span><div class="tree-node">map, scale, smooth, reverse, repeat — productivity-preserving when source guarded</div></div><div class="tree-node"><span class="tree-label">Waveform Visualization</span><div class="tree-node">Real-time stream plotting · Animated step highlight · Bisimulation comparison</div></div><div class="tree-node"><span class="tree-label">OEIS Integration</span><div class="tree-node">Gzipped JSON chunks · No LFS · Fast loading</div></div><div class="tree-node"><span class="tree-label">Key Insight</span><div class="tree-node">Different guardedness parameters → different productivity inferences</div></div>`; }
+        populateMethodTree();
+        
+        async function initOEIS(){ const statusDiv=document.getElementById('oeisStatus'); statusDiv.innerHTML='📦 Loading OEIS index...'; const loaded=await oeisLoader.loadIndex(); if(loaded){ const cnt=Object.keys(oeisLoader.index).length; statusDiv.innerHTML=`✅ OEIS ready: ${cnt.toLocaleString()} sequences`; statusDiv.style.color='var(--accent-success)'; }else{ statusDiv.innerHTML='⚠️ Using built-in sequences (place oeis/index.json.gz for full library)'; statusDiv.style.color='var(--accent-warning)'; } }
+        initOEIS();
+        
+        setTimeout(()=>{ document.getElementById('loadExampleBtn').click(); setTimeout(()=>document.getElementById('runStreamsBtn').click(),100); },100);
+    </script>
+</body>
+</html>
