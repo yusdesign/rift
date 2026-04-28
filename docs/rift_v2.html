@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolutive Coinduction Explorer | Inference Engine · OEIS · Persistent Context</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --text-primary: #e2e2e2;
+            --text-secondary: #a0a0b0;
+            --accent-success: #00d4aa;
+            --accent-error: #ff6b6b;
+            --accent-warning: #ffd93d;
+            --accent-info: #6c63ff;
+            --border: #2a2a3a;
+            --slider-track: #94a3b8;
+            --slider-fill: var(--accent-info);
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.5; }
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 0.6rem 1.2rem; }
+        .header h1 { font-size: 1.3rem; color: var(--accent-info); display: inline-block; }
+        .header .subtitle { color: var(--text-secondary); margin-top: 0.15rem; font-size: 0.7rem; }
+        
+        .app-container { display: grid; grid-template-columns: 350px 1fr 400px; gap: 0.6rem; padding: 0.75rem; min-height: calc(100vh - 75px); }
+        .panel { background: var(--bg-secondary); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; }
+        .panel-header { background: var(--bg-tertiary); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+        .panel-content { padding: 0.6rem; flex: 1; overflow-y: auto; max-height: calc(100vh - 120px); }
+        
+        .btn { padding: 0.3rem 0.6rem; border: 1px solid var(--border); background: var(--bg-tertiary); cursor: pointer; font-weight: 500; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.3rem; color: var(--text-primary); }
+        .btn-primary { background: var(--accent-info); border-color: var(--accent-info); color: white; }
+        .btn-primary:hover { filter: brightness(0.9); }
+        .btn-success { background: var(--accent-success); border-color: var(--accent-success); color: #0f0f1a; }
+        
+        .stream-card { background: var(--bg-tertiary); border-left: 3px solid var(--accent-info); padding: 0.35rem 0.5rem; margin-bottom: 0.35rem; cursor: pointer; transition: all 0.1s; }
+        .stream-card:hover { transform: translateX(3px); background: rgba(108, 99, 255, 0.1); }
+        .stream-card.selected { border-left-color: var(--accent-success); background: rgba(0,212,170,0.1); }
+        .step-badge { background: var(--bg-primary); padding: 0.1rem 0.35rem; font-size: 0.55rem; display: inline-block; margin-bottom: 0.2rem; }
+        .value-display { font-size: 0.75rem; font-weight: 500; }
+        .value-display code { background: var(--bg-primary); padding: 0.1rem 0.25rem; font-size: 0.7rem; }
+        
+        canvas.waveform { width: 100%; height: 70px; background: #0a0a0f; display: block; margin: 0.25rem 0; }
+        .controls { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; margin: 0.4rem 0; }
+        
+        select, input { background: var(--bg-tertiary); border: 1px solid var(--border); padding: 0.25rem 0.4rem; color: var(--text-primary); width: 100%; margin-bottom: 0.35rem; font-size: 0.7rem; }
+        
+        /* Guard Level Slider with Tooltip */
+        .guard-slider-container { margin: 0.5rem 0; }
+        .guard-slider-container label { font-size: 0.65rem; display: flex; justify-content: space-between; margin-bottom: 0.2rem; }
+        .generator-input {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            cursor: pointer;
+        }
+        .generator-input::-webkit-slider-runnable-track {
+            height: 2px;
+            background: linear-gradient(to right, var(--slider-fill) var(--range-pct, 0%), var(--slider-track) var(--range-pct, 0%));
+            border-radius: 0px;
+            border: none;
+        }
+        .generator-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            background: var(--slider-fill);
+            border-radius: 0px;
+            border: none;
+            margin-top: -5px;
+            cursor: pointer;
+        }
+        .generator-input::-moz-range-track {
+            height: 2px;
+            background: linear-gradient(to right, var(--slider-fill) var(--range-pct, 0%), var(--slider-track) var(--range-pct, 0%));
+            border-radius: 0px;
+            border: none;
+        }
+        .generator-input::-moz-range-thumb {
+            height: 12px;
+            width: 12px;
+            background: var(--slider-fill);
+            border-radius: 0px;
+            border: none;
+            cursor: pointer;
+        }
+        .tooltip { position: relative; display: inline-block; cursor: help; }
+        .tooltip .tooltiptext { visibility: hidden; width: 180px; background: var(--bg-primary); color: var(--text-primary); text-align: center; border: 1px solid var(--border); padding: 0.2rem; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -90px; font-size: 0.6rem; }
+        .tooltip:hover .tooltiptext { visibility: visible; }
+        
+        /* Inference Results - Persistent */
+        .inference-results-container { max-height: 280px; overflow-y: auto; margin-top: 0.5rem; }
+        .inference-result { background: var(--bg-tertiary); padding: 0.4rem; margin-bottom: 0.4rem; border-left: 3px solid var(--accent-info); cursor: pointer; transition: all 0.1s; }
+        .inference-result:hover { transform: translateX(2px); background: rgba(108,99,255,0.1); }
+        .classification-badge { display: inline-block; padding: 0.1rem 0.3rem; font-size: 0.55rem; margin: 0.15rem; }
+        .badge-nature { background: rgba(0, 212, 170, 0.2); color: var(--accent-success); }
+        .badge-tech { background: rgba(108, 99, 255, 0.2); color: var(--accent-info); }
+        .badge-society { background: rgba(255, 217, 61, 0.2); color: var(--accent-warning); }
+        .badge-art { background: rgba(255, 107, 107, 0.2); color: var(--accent-error); }
+        
+        .context-search { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+        .context-search input { flex: 1; margin: 0; }
+        
+        .method-tree { background: var(--bg-tertiary); padding: 0.5rem; font-size: 0.65rem; margin-top: 0.5rem; }
+        .tree-node { margin-left: 0.8rem; position: relative; }
+        .tree-node::before { content: '├─'; position: absolute; left: -0.7rem; color: var(--accent-info); }
+        
+        @media (max-width: 1100px) { .app-container { grid-template-columns: 1fr; gap: 0.6rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Resolutive Coinduction Explorer</h1>
+        <div class="subtitle">Persistent Inference · Guard Level Slider · Contextual Search · OEIS Corpus</div>
+    </div>
+
+    <div class="app-container">
+        <!-- LEFT: Stream Definitions & OEIS -->
+        <div class="panel">
+            <div class="panel-header"><span>📝 Stream Sources</span><button class="btn" id="loadExampleBtn">📚 Example</button></div>
+            <div class="panel-content">
+                <textarea id="streamEditor" rows="4" style="width:100%; background:#0a0a0f; border:1px solid var(--border); color:white; padding:0.4rem; font-family:monospace; font-size:0.7rem;"></textarea>
+                <div class="controls" style="margin-top:0.3rem;">
+                    <button class="btn btn-primary" id="runStreamsBtn">▶ Run</button>
+                    <button class="btn" id="clearStreamsBtn">🗑 Clear</button>
+                </div>
+                <div style="display:flex; gap:0.3rem; margin-top:0.3rem;">
+                    <input type="text" id="oeisId" placeholder="OEIS ID (A000045)" list="oeisSuggestions" style="margin:0; flex:1;">
+                    <datalist id="oeisSuggestions">
+                        <option value="A000027">Natural numbers</option><option value="A000045">Fibonacci</option>
+                        <option value="A000079">Powers of 2</option><option value="A000142">Factorials</option>
+                        <option value="A000217">Triangular</option><option value="A000290">Squares</option>
+                        <option value="A000040">Primes</option><option value="A001477">Nonnegative</option>
+                    </datalist>
+                    <button class="btn" id="fetchOeisBtn">🔢 Fetch</button>
+                </div>
+                <div id="streamList" style="margin-top:0.4rem;"></div>
+            </div>
+        </div>
+
+        <!-- MIDDLE: Waveform Studio + Bisimulation -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🎵 Waveform Studio</span>
+                <div class="tooltip"><span class="tooltiptext">Guard level affects productivity scoring</span>
+                    <div class="guard-slider-container" style="width:150px;">
+                        <input type="range" id="guardSlider" class="generator-input" min="0" max="3" step="1" value="1">
+                        <div style="display:flex; justify-content:space-between; font-size:0.55rem; margin-top:0.1rem;">
+                            <span>🔒</span><span>⚖️</span><span>🌀</span><span>🔓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-content">
+                <select id="waveformSelect"><option value="">Select stream to visualize</option></select>
+                <canvas id="waveformCanvas" class="waveform" width="400" height="70"></canvas>
+                <div class="controls">
+                    <button id="playBtn" class="btn">▶</button><button id="stopBtn" class="btn">⏸</button>
+                    <button id="resetBtn" class="btn">↺</button>
+                    <input type="range" id="stepSlider" class="generator-input" min="0" max="100" value="0" style="flex:1;">
+                    <span id="stepValue" style="font-size:0.6rem; width:30px;">0</span>
+                </div>
+                <div id="sequencePreview" style="font-size:0.6rem; background:var(--bg-primary); padding:0.25rem; overflow-x:auto;"></div>
+                
+                <div style="margin-top:0.5rem;"><strong>🔍 Bisimulation</strong></div>
+                <select id="leftStreamSelect"><option value="">Left Stream</option></select>
+                <select id="rightStreamSelect"><option value="">Right Stream</option></select>
+                <button class="btn btn-primary" id="compareBtn" style="width:100%; margin-top:0.2rem;">🔗 Compare</button>
+                <div id="comparisonResult" style="margin-top:0.3rem;"></div>
+                <div id="guardednessResult" style="font-size:0.65rem; margin-top:0.3rem; padding:0.25rem; background:var(--bg-tertiary);"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Persistent Inference Engine -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>🔍 Inference Engine</span>
+                <button class="btn btn-primary" id="runInferenceBtn">⚡ Search</button>
+            </div>
+            <div class="panel-content">
+                <!-- Search Controls -->
+                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+                    <select id="searchMode" style="flex:2;">
+                        <option value="bisimilar">🔗 Bisimilar Pairs</option>
+                        <option value="guarded">🛡️ Well-Guarded Streams</option>
+                        <option value="divergent">⚠️ Divergent Pairs</option>
+                        <option value="classify">🏷️ Classify All</option>
+                    </select>
+                    <input type="number" id="searchDepth" value="50" style="width:65px;" placeholder="steps">
+                </div>
+                
+                <!-- Contextual Search -->
+                <div class="context-search">
+                    <input type="text" id="contextPrompt" placeholder="Ask: 'sequences for music' or 'growth patterns'">
+                    <button class="btn" id="contextSearchBtn">🔍 Context</button>
+                </div>
+                
+                <!-- Guard Level Display -->
+                <div id="guardLevelDisplay" style="font-size:0.6rem; margin:0.3rem 0; padding:0.2rem; background:var(--bg-tertiary); text-align:center;"></div>
+                
+                <!-- Persistent Inference Results -->
+                <div id="inferenceResults" class="inference-results-container"></div>
+                
+                <!-- Preset Filters -->
+                <div style="margin-top:0.5rem;">
+                    <div style="font-size:0.65rem; margin-bottom:0.2rem;">📂 Domain Filters</div>
+                    <div class="controls" style="margin:0;">
+                        <button class="btn preset-btn" data-domain="nature">🌿 Nature</button>
+                        <button class="btn preset-btn" data-domain="tech">💻 Tech</button>
+                        <button class="btn preset-btn" data-domain="society">🏛️ Society</button>
+                        <button class="btn preset-btn" data-domain="art">🎨 Art</button>
+                    </div>
+                </div>
+                
+                <div id="methodTree" class="method-tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Helper: Slider Handler
+        // ============================================
+        function initSlider(slider) {
+            const handleInput = (el) => {
+                const min = parseFloat(el.min) || 0;
+                const max = parseFloat(el.max) || 100;
+                const val = parseFloat(el.value);
+                const pct = (val - min) / (max - min) * 100;
+                el.style.setProperty('--range-pct', pct + '%');
+            };
+            slider.addEventListener('input', (e) => handleInput(e.target));
+            handleInput(slider);
+        }
+        
+        // ============================================
+        // Core Classes
+        // ============================================
+        class ResStream {
+            constructor(name, seed, stepFn) { this.name = name; this.seed = seed; this.stepFn = stepFn; this.cache = new Map(); }
+            step(s) { if (!this.cache.has(s)) this.cache.set(s, this.stepFn(s)); return this.cache.get(s); }
+            take(n) { const r = []; let s = this.seed; for (let i=0;i<n;i++) { const [v,nxt]=this.step(s); r.push(v); s=nxt; } return r; }
+        }
+        
+        class GuardednessChecker {
+            constructor() { 
+                this.levels = ['STRICT', 'MODERATE', 'LAX', 'MINIMAL'];
+                this.levelNames = ['🔒 Strict', '⚖️ Moderate', '🌀 Lax', '🔓 Minimal'];
+                this.thresholds = [80, 60, 40, 20];
+                this.currentIdx = 1;
+            }
+            setLevel(idx) { if(idx>=0 && idx<4){ this.currentIdx = idx; return true; } return false; }
+            getCurrentLevel() { return this.levels[this.currentIdx]; }
+            checkStream(stream, levelIdx=null) {
+                const idx = (levelIdx !== null) ? levelIdx : this.currentIdx;
+                const threshold = this.thresholds[idx];
+                const stepStr = stream.stepFn.toString(); let score = 0;
+                const hasArrayReturn = /return\s*\[/.test(stepStr) || /=>\s*\[/.test(stepStr);
+                if(hasArrayReturn) score += 25;
+                const hasThunk = /\(\)\s*=>/.test(stepStr), hasAnyLambda = />=\s*\(?[a-zA-Z_]/;
+                if(idx === 0 && hasThunk) score += 45;
+                else if(idx === 1) { if(hasThunk) score += 45; else if(hasAnyLambda) score += 30; else score += 15; }
+                else if(idx === 2) score += 25;
+                else if(idx === 3) score += 10;
+                const hasValueBeforeRecur = /return\s*\[[^,\]]+,\s*/.test(stepStr);
+                if(hasValueBeforeRecur) score += 25;
+                try{ let seed=stream.seed; for(let i=0;i<5;i++){ const [v,n]=stream.step(seed); seed=n; } score += 10; } catch(e){}
+                return { productive: score >= threshold, score: score, level: this.levelNames[idx] };
+            }
+        }
+        
+        class BisimulationProver {
+            prove(s1,s2,maxSteps=100){
+                const visited=new Set(), queue=[[s1.seed,s2.seed]];
+                while(queue.length && visited.size<maxSteps){
+                    const [seed1,seed2]=queue.shift();
+                    const key=JSON.stringify(seed1)+'|'+JSON.stringify(seed2);
+                    if(visited.has(key)) continue; visited.add(key);
+                    const [v1,n1]=s1.step(seed1), [v2,n2]=s2.step(seed2);
+                    if(v1!==v2) return { bisimilar: false, step: visited.size-1, v1, v2 };
+                    queue.push([n1,n2]);
+                }
+                return { bisimilar: true, stepsChecked: visited.size };
+            }
+        }
+        
+        class WaveformVisualizer {
+            draw(canvas, stream, steps=70, color='#6c63ff', highlight=-1){
+                const ctx=canvas.getContext('2d'); const w=canvas.clientWidth, h=canvas.clientHeight;
+                canvas.width=w; canvas.height=h;
+                const values=stream.take(steps);
+                ctx.fillStyle='#0a0a0f'; ctx.fillRect(0,0,w,h);
+                if(values.length<2) return;
+                const minVal=Math.min(...values,0), maxVal=Math.max(...values,1), range=Math.max(maxVal-minVal,0.01);
+                ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=1.5;
+                for(let i=0;i<values.length;i++){
+                    const x=(i/(values.length-1))*w;
+                    const y=h-((values[i]-minVal)/range)*(h-12)-6;
+                    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                if(highlight>=0 && highlight<values.length){
+                    const x=(highlight/(values.length-1))*w;
+                    const y=h-((values[highlight]-minVal)/range)*(h-12)-6;
+                    ctx.fillStyle='#ffd93d'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+                }
+            }
+        }
+        
+        // ============================================
+        // OEIS Data
+        // ============================================
+        const oeisData = {
+            'A000027': { name: 'Natural numbers', data: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], domain: 'nature' },
+            'A001477': { name: 'Nonnegative integers', data: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], domain: 'nature' },
+            'A000045': { name: 'Fibonacci numbers', data: [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181], domain: 'nature' },
+            'A000079': { name: 'Powers of 2', data: [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768], domain: 'tech' },
+            'A000142': { name: 'Factorials', data: [1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800], domain: 'tech' },
+            'A000217': { name: 'Triangular numbers', data: [0,1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190], domain: 'nature' },
+            'A000290': { name: 'Squares', data: [0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361], domain: 'tech' },
+            'A000040': { name: 'Prime numbers', data: [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71], domain: 'nature' },
+            'A000108': { name: 'Catalan numbers', data: [1,1,2,5,14,42,132,429,1430,4862,16796,58786], domain: 'tech' },
+            'A000110': { name: 'Bell numbers', data: [1,1,2,5,15,52,203,877,4140,21147,115975], domain: 'tech' },
+            'A000034': { name: 'Periodic 1,2', data: [1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2], domain: 'art' },
+            'A000796': { name: 'Pi digits', data: [3,1,4,1,5,9,2,6,5,3,5,8,9,7,9,3,2,3,8,4], domain: 'tech' }
+        };
+        
+        function loadFromOEIS(id){
+            const seq = oeisData[id.toUpperCase()] || oeisData['A000027'];
+            const seed = { index: 0, terms: seq.data };
+            const stepFn = (s) => [s.terms[s.index % s.terms.length], { index: s.index + 1, terms: s.terms }];
+            return new ResStream(`OEIS_${id}`, seed, stepFn);
+        }
+        
+        function parseStreamsFromCode(code){
+            const result={}, cleanCode=code.replace(/\/\/.*$/gm,'');
+            const regex=/(?:const|let|var)?\s*(\w+)\s*=\s*\{\s*seed:\s*([^,]+),?\s*step:\s*\(([^)]+)\)\s*=>\s*\[\s*([^,]+),\s*([^\]]+)\s*\]\s*\}/g;
+            let match;
+            while((match=regex.exec(cleanCode))!==null){
+                const name=match[1], seedStr=match[2].trim(), params=match[3].trim(), valExpr=match[4].trim(), nextExpr=match[5].trim();
+                let seed; try{ seed=Function(`"use strict"; return (${seedStr})`)(); }catch(e){ continue; }
+                const stepFn=new Function(params,`return [${valExpr}, ${nextExpr}];`);
+                result[name]={seed,step:stepFn};
+            }
+            return result;
+        }
+        
+        // ============================================
+        // Classification
+        // ============================================
+        const classifier = {
+            domains: {
+                nature: { name: '🌿 Nature & Biology', color: 'badge-nature', apps: ['Population modeling', 'Biological sequences', 'Ecological forecasting', 'Genetic patterns'] },
+                tech: { name: '💻 Technology & Computing', color: 'badge-tech', apps: ['Algorithm benchmarking', 'Cryptography', 'Data compression', 'Error detection'] },
+                society: { name: '🏛️ Society & Economics', color: 'badge-society', apps: ['Economic trends', 'Demographics', 'Risk assessment', 'Market analysis'] },
+                art: { name: '🎨 Art & Music', color: 'badge-art', apps: ['Generative music', 'Visual patterns', 'Rhythm generation', 'Procedural art'] }
+            },
+            classify(id, name, data){
+                let domain = 'tech';
+                const firstFew = data.slice(0,6);
+                if(firstFew[0]===0 && firstFew[1]===1 && firstFew[2]===1) domain = 'nature';
+                else if(firstFew[0]===1 && firstFew[1]===2 && firstFew[2]===3) domain = 'nature';
+                else if(firstFew[0]===firstFew[2]) domain = 'art';
+                else if(data[5]/data[4] > 1.5) domain = 'tech';
+                else if(id.toLowerCase().includes('prime') || id.toLowerCase().includes('fib')) domain = 'nature';
+                else domain = 'tech';
+                const appIdx = Math.abs((data[0]||0) % this.domains[domain].apps.length);
+                return { domain: this.domains[domain], application: this.domains[domain].apps[appIdx] };
+            }
+        };
+        
+        // ============================================
+        // Inference Engine
+        // ============================================
+        class InferenceEngine {
+            constructor(oeisData){ this.oeis = oeisData; }
+            
+            findBisimilarPairs(depth=50){
+                const ids = Object.keys(this.oeis);
+                const results = [];
+                for(let i=0;i<ids.length;i++){
+                    for(let j=i+1;j<ids.length;j++){
+                        const s1 = loadFromOEIS(ids[i]);
+                        const s2 = loadFromOEIS(ids[j]);
+                        const prover = new BisimulationProver();
+                        const result = prover.prove(s1, s2, depth);
+                        if(result.bisimilar){
+                            results.push({ type: 'bisimilar', left: ids[i], right: ids[j], leftName: this.oeis[ids[i]].name, rightName: this.oeis[ids[j]].name, steps: result.stepsChecked, domain: this.oeis[ids[i]].domain });
+                        }
+                    }
+                }
+                return results;
+            }
+            
+            findWellGuarded(levelIdx, minScore=60){
+                const checker = new GuardednessChecker();
+                const results = [];
+                for(const [id, seq] of Object.entries(this.oeis)){
+                    const stream = loadFromOEIS(id);
+                    const check = checker.checkStream(stream, levelIdx);
+                    if(check.score >= minScore){
+                        results.push({ type: 'guarded', id: id, name: seq.name, score: check.score, productive: check.productive, domain: seq.domain });
+                    }
+                }
+                return results.sort((a,b)=>b.score - a.score);
+            }
+            
+            findDivergentPairs(depth=50){
+                const ids = Object.keys(this.oeis);
+                const results = [];
+                for(let i=0;i<ids.length;i++){
+                    for(let j=i+1;j<ids.length;j++){
+                        const s1 = loadFromOEIS(ids[i]);
+                        const s2 = loadFromOEIS(ids[j]);
+                        const prover = new BisimulationProver();
+                        const result = prover.prove(s1, s2, depth);
+                        if(!result.bisimilar){
+                            results.push({ type: 'divergent', left: ids[i], right: ids[j], leftName: this.oeis[ids[i]].name, rightName: this.oeis[ids[j]].name, step: result.step, leftValue: result.v1, rightValue: result.v2 });
+                        }
+                    }
+                }
+                return results.slice(0, 30);
+            }
+            
+            classifyAll(){
+                const results = [];
+                for(const [id, seq] of Object.entries(this.oeis)){
+                    const classification = classifier.classify(id, seq.name, seq.data);
+                    results.push({ type: 'classified', id: id, name: seq.name, domain: classification.domain, application: classification.application });
+                }
+                return results;
+            }
+            
+            contextualSearch(prompt){
+                const lower = prompt.toLowerCase();
+                const results = [];
+                for(const [id, seq] of Object.entries(this.oeis)){
+                    let relevance = 0;
+                    if(seq.name.toLowerCase().includes(lower)) relevance += 3;
+                    if(seq.domain === 'nature' && (lower.includes('nature')||lower.includes('bio')||lower.includes('growth'))) relevance += 2;
+                    if(seq.domain === 'tech' && (lower.includes('tech')||lower.includes('compute')||lower.includes('code'))) relevance += 2;
+                    if(seq.domain === 'art' && (lower.includes('art')||lower.includes('music')||lower.includes('rhythm'))) relevance += 2;
+                    if(seq.domain === 'society' && (lower.includes('society')||lower.includes('eco')||lower.includes('market'))) relevance += 2;
+                    if(relevance > 0){
+                        const classification = classifier.classify(id, seq.name, seq.data);
+                        results.push({ id, name: seq.name, domain: classification.domain, application: classification.application, relevance });
+                    }
+                }
+                return results.sort((a,b)=>b.relevance - a.relevance);
+            }
+        }
+        
+        // ============================================
+        // Global State
+        // ============================================
+        const streams = new Map();
+        let currentStream = null;
+        let animationInterval = null;
+        let currentStep = 0;
+        let selectedLeft = null, selectedRight = null;
+        
+        const checker = new GuardednessChecker();
+        const visualizer = new WaveformVisualizer();
+        const prover = new BisimulationProver();
+        const engine = new InferenceEngine(oeisData);
+        
+        const canvas = document.getElementById('waveformCanvas');
+        const guardSlider = document.getElementById('guardSlider');
+        initSlider(guardSlider);
+        
+        function updateGuardDisplay(){
+            const levelNames = ['🔒 Strict (80)', '⚖️ Moderate (60)', '🌀 Lax (40)', '🔓 Minimal (20)'];
+            document.getElementById('guardLevelDisplay').innerHTML = `🛡️ Current Guard: ${levelNames[checker.currentIdx]}`;
+            if(currentStream){
+                const check = checker.checkStream(currentStream);
+                document.getElementById('guardednessResult').innerHTML = `📊 Score: ${check.score} — ${check.productive ? '✓ Productive' : '⚠ May diverge'}`;
+            }
+            updateStreamList();
+        }
+        
+        guardSlider.oninput = (e) => {
+            const idx = parseInt(e.target.value);
+            checker.setLevel(idx);
+            updateGuardDisplay();
+            const pct = (idx / 3) * 100;
+            guardSlider.style.setProperty('--range-pct', pct + '%');
+            if(currentStream) updateWaveform();
+        };
+        
+        function updateStreamList(){
+            const container = document.getElementById('streamList');
+            if(streams.size===0){
+                container.innerHTML = '<div class="stream-card" style="text-align:center;">No streams loaded</div>';
+                return;
+            }
+            container.innerHTML = Array.from(streams.values()).map(s => {
+                const check = checker.checkStream(s);
+                const isSelected = currentStream === s;
+                return `<div class="stream-card ${check.productive?'guarded-success':''} ${isSelected?'selected':''}" onclick="selectStream('${s.name}')">
+                    <div class="step-badge">📊 ${s.name}</div>
+                    <div class="value-display"><code>[${s.take(5).join(', ')}...]</code> — score: ${check.score}</div>
+                </div>`;
+            }).join('');
+            
+            const waveSelect = document.getElementById('waveformSelect');
+            waveSelect.innerHTML = '<option value="">Select stream</option>' + Array.from(streams.keys()).map(n => `<option value="${n}">${n}</option>`).join('');
+            
+            const leftSelect = document.getElementById('leftStreamSelect');
+            const rightSelect = document.getElementById('rightStreamSelect');
+            const options = Array.from(streams.keys()).map(n => `<option value="${n}" ${selectedLeft===n?'selected':''}>${n}</option>`).join('');
+            leftSelect.innerHTML = '<option value="">Left</option>' + options;
+            rightSelect.innerHTML = '<option value="">Right</option>' + options;
+        }
+        
+        window.selectStream = (name) => {
+            if(streams.has(name)){
+                currentStream = streams.get(name);
+                updateWaveform();
+                updateStreamList();
+            }
+        };
+        
+        function updateWaveform(){
+            if(!currentStream) return;
+            visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1);
+            const preview = currentStream.take(20);
+            document.getElementById('sequencePreview').innerHTML = `[${preview.map(v=>v.toFixed(1)).join(', ')}...]`;
+            const check = checker.checkStream(currentStream);
+            document.getElementById('guardednessResult').innerHTML = `📊 Score: ${check.score} — ${check.productive ? '✓ Productive' : '⚠ May diverge'} (${check.level})`;
+        }
+        
+        function updateComparison(){
+            const leftName = document.getElementById('leftStreamSelect').value;
+            const rightName = document.getElementById('rightStreamSelect').value;
+            selectedLeft = leftName; selectedRight = rightName;
+            if(!leftName || !rightName || !streams.has(leftName) || !streams.has(rightName)){
+                document.getElementById('comparisonResult').innerHTML = '';
+                return;
+            }
+            const left = streams.get(leftName);
+            const right = streams.get(rightName);
+            const result = prover.prove(left, right, 100);
+            const resultDiv = document.getElementById('comparisonResult');
+            if(result.bisimilar){
+                resultDiv.innerHTML = `<div style="background:rgba(0,212,170,0.1); padding:0.3rem; text-align:center;">✓ BISIMILAR · ${result.stepsChecked} steps</div>`;
+            } else {
+                resultDiv.innerHTML = `<div style="background:rgba(255,107,107,0.1); padding:0.3rem; text-align:center;">✗ DIVERGENT at step ${result.step}<br>${leftName}: ${result.v1} ≠ ${rightName}: ${result.v2}</div>`;
+            }
+        }
+        
+        // ============================================
+        // Event Handlers
+        // ============================================
+        document.getElementById('loadExampleBtn').onclick = () => {
+            document.getElementById('streamEditor').value = `// Fibonacci stream\nconst fibonacci = { seed: [0, 1], step: ([a, b]) => [a, [b, a + b]] };\n\n// Powers of 2\nconst powersOf2 = { seed: 1, step: (n) => [n, n * 2] };`;
+        };
+        
+        document.getElementById('runStreamsBtn').onclick = () => {
+            try{
+                const code = document.getElementById('streamEditor').value;
+                const defs = parseStreamsFromCode(code);
+                streams.clear();
+                for(const [name,def] of Object.entries(defs)) streams.set(name, new ResStream(name, def.seed, def.step));
+                if(streams.size===0) alert('No valid streams found');
+                updateStreamList();
+                if(streams.size>0) selectStream(Array.from(streams.keys())[0]);
+            } catch(e){ alert('Error: '+e.message); }
+        };
+        
+        document.getElementById('clearStreamsBtn').onclick = () => {
+            streams.clear();
+            currentStream = null;
+            updateStreamList();
+            canvas.getContext('2d').fillRect(0,0,400,70);
+            document.getElementById('comparisonResult').innerHTML = '';
+            document.getElementById('guardednessResult').innerHTML = '';
+        };
+        
+        document.getElementById('waveformSelect').onchange = (e) => { if(e.target.value && streams.has(e.target.value)) selectStream(e.target.value); };
+        document.getElementById('leftStreamSelect').onchange = () => updateComparison();
+        document.getElementById('rightStreamSelect').onchange = () => updateComparison();
+        document.getElementById('compareBtn').onclick = () => updateComparison();
+        
+        document.getElementById('fetchOeisBtn').onclick = () => {
+            const id = document.getElementById('oeisId').value.trim().toUpperCase();
+            if(!id || !oeisData[id]){ alert('Try: A000027, A000045, A000079, A000142, A000217, A000290'); return; }
+            const stream = loadFromOEIS(id);
+            streams.set(stream.name, stream);
+            updateStreamList();
+            selectStream(stream.name);
+        };
+        
+        // Animation
+        document.getElementById('playBtn').onclick = () => {
+            if(animationInterval) clearInterval(animationInterval);
+            let step = 0;
+            animationInterval = setInterval(() => {
+                if(step < 70){
+                    visualizer.draw(canvas, currentStream, 70, '#6c63ff', step);
+                    document.getElementById('stepSlider').value = step;
+                    document.getElementById('stepValue').innerText = step;
+                    step++;
+                } else {
+                    clearInterval(animationInterval);
+                    visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1);
+                }
+            }, 35);
+        };
+        document.getElementById('stopBtn').onclick = () => { if(animationInterval) clearInterval(animationInterval); visualizer.draw(canvas, currentStream, 70, '#6c63ff', -1); };
+        document.getElementById('resetBtn').onclick = () => { currentStep = 0; updateWaveform(); };
+        document.getElementById('stepSlider').oninput = (e) => { currentStep = parseInt(e.target.value); visualizer.draw(canvas, currentStream, 70, '#6c63ff', currentStep); document.getElementById('stepValue').innerText = currentStep; };
+        
+        // Inference Engine
+        function displayInferenceResults(results){
+            const container = document.getElementById('inferenceResults');
+            if(!results.length){ container.innerHTML = '<div class="inference-result">No results found. Try different parameters.</div>'; return; }
+            container.innerHTML = results.map(r => {
+                if(r.type === 'bisimilar'){
+                    return `<div class="inference-result" onclick="selectBoth('${r.left}','${r.right}')">
+                        <strong>🔗 Bisimilar Pair</strong><br>
+                        ${r.left} (${r.leftName}) ↔ ${r.right} (${r.rightName})<br>
+                        <span class="classification-badge badge-${r.domain}">${classifier.domains[r.domain]?.name || r.domain}</span>
+                        <span style="font-size:0.6rem;">✓ ${r.steps} steps identical</span>
+                        <div style="font-size:0.55rem; color:var(--text-secondary);">💡 Click to compare</div>
+                    </div>`;
+                } else if(r.type === 'guarded'){
+                    return `<div class="inference-result" onclick="selectStream('OEIS_${r.id}')">
+                        <strong>🛡️ ${r.id} — ${r.name}</strong><br>
+                        <span class="classification-badge badge-${r.domain}">${classifier.domains[r.domain]?.name || r.domain}</span>
+                        <span style="font-size:0.6rem;">Score: ${r.score} — ${r.productive?'✓ Productive':'⚠ Check'}</span>
+                        <div style="font-size:0.55rem; color:var(--text-secondary);">💡 Click to load</div>
+                    </div>`;
+                } else if(r.type === 'divergent'){
+                    return `<div class="inference-result">
+                        <strong>⚠️ Divergent at step ${r.step}</strong><br>
+                        ${r.left} (${r.leftName}) vs ${r.right} (${r.rightName})<br>
+                        <span style="font-size:0.6rem;">${r.leftValue} ≠ ${r.rightValue}</span>
+                    </div>`;
+                } else if(r.type === 'classified'){
+                    return `<div class="inference-result" onclick="selectStream('OEIS_${r.id}')">
+                        <strong>🏷️ ${r.id} — ${r.name}</strong><br>
+                        <span class="classification-badge ${r.domain.color}">${r.domain.name}</span>
+                        <div style="font-size:0.6rem;">🎯 ${r.application}</div>
+                        <div style="font-size:0.55rem; color:var(--text-secondary);">💡 Click to load</div>
+                    </div>`;
+                }
+                return '';
+            }).join('');
+        }
+        
+        window.selectBoth = (leftId, rightId) => {
+            const leftSelect = document.getElementById('leftStreamSelect');
+            const rightSelect = document.getElementById('rightStreamSelect');
+            leftSelect.value = `OEIS_${leftId}`;
+            rightSelect.value = `OEIS_${rightId}`;
+            selectedLeft = `OEIS_${leftId}`;
+            selectedRight = `OEIS_${rightId}`;
+            updateComparison();
+        };
+        
+        document.getElementById('runInferenceBtn').onclick = () => {
+            const mode = document.getElementById('searchMode').value;
+            const depth = parseInt(document.getElementById('searchDepth').value) || 50;
+            let results = [];
+            if(mode === 'bisimilar') results = engine.findBisimilarPairs(depth);
+            else if(mode === 'guarded') results = engine.findWellGuarded(checker.currentIdx, 60);
+            else if(mode === 'divergent') results = engine.findDivergentPairs(depth);
+            else if(mode === 'classify') results = engine.classifyAll();
+            displayInferenceResults(results);
+        };
+        
+        document.getElementById('contextSearchBtn').onclick = () => {
+            const prompt = document.getElementById('contextPrompt').value.trim();
+            if(!prompt){ alert('Enter a search query (e.g., "music", "growth", "cryptography")'); return; }
+            const results = engine.contextualSearch(prompt);
+            displayInferenceResults(results.map(r => ({ ...r, type: 'classified' })));
+        };
+        
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.onclick = () => {
+                const domain = btn.dataset.domain;
+                const results = engine.classifyAll().filter(r => r.domain.name.toLowerCase().includes(domain));
+                displayInferenceResults(results);
+            };
+        });
+        
+        function populateMethodTree(){
+            document.getElementById('methodTree').innerHTML = `
+                <div class="tree-root">📐 Resolutive Inference</div>
+                <div class="tree-node">🔗 Bisimilar pairs → click to compare</div>
+                <div class="tree-node">🛡️ Guarded streams → load to waveform</div>
+                <div class="tree-node">🏷️ Domain classification → real-world apps</div>
+                <div class="tree-node">🔍 Contextual search → ask in plain English</div>
+                <div class="tree-node">⚖️ Guard slider → adjust strictness</div>
+            `;
+        }
+        populateMethodTree();
+        
+        // Load default OEIS streams
+        setTimeout(() => {
+            const defaultIds = ['A000027', 'A000045', 'A000079'];
+            defaultIds.forEach(id => { const stream = loadFromOEIS(id); streams.set(stream.name, stream); });
+            updateStreamList();
+            if(streams.size > 0) selectStream(Array.from(streams.keys())[0]);
+            updateGuardDisplay();
+        }, 100);
+    </script>
+</body>
+</html>
